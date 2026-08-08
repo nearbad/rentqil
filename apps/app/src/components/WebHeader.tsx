@@ -65,7 +65,10 @@ export function WebHeader() {
           })}
         >
           <AppText variant="h3" color={tokens.colors.white} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
-            RENTQIL!
+            RENTQIL
+            <AppText variant="h3" color={tokens.colors.accent} style={{ letterSpacing: 1 }}>
+              !
+            </AppText>
           </AppText>
         </Pressable>
 

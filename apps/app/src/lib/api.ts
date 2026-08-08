@@ -53,3 +53,26 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   }
   return json as T;
 }
+
+// multipart image upload, web only for now (the owner cabinet)
+export async function apiUpload(file: Blob, name: string): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append('file', file, name);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/uploads`, {
+      method: 'POST',
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      body: form,
+    });
+  } catch {
+    throw new ApiError('NETWORK', 'network request failed');
+  }
+  const json = (await res.json().catch(() => null)) as
+    | { url?: string; error?: { code?: string; message?: string } }
+    | null;
+  if (!res.ok || !json?.url) {
+    throw new ApiError(json?.error?.code ?? 'UNKNOWN', json?.error?.message ?? `http ${res.status}`);
+  }
+  return { url: json.url };
+}

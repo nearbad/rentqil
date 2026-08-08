@@ -142,6 +142,9 @@ export const venueUpsertSchema = z.object({
   // a new venue is one bookable field, the court is created with it
   sport: sportCode.optional(),
   indoor: z.boolean().default(false),
+  // default daily working window for the new field, owner refines later
+  openHour: z.number().int().min(0).max(23).optional(),
+  closeHour: z.number().int().min(1).max(24).optional(),
   requireNames: z.boolean().default(false),
   requireDocuments: z.boolean().default(false),
   terms: z.string().trim().max(2000).default(''),

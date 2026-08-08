@@ -346,6 +346,9 @@ export const en: Record<keyof typeof uz, string> = {
   'error.PASSWORD_INVALID': 'Wrong email or password',
   'owner.schedulePrices': 'Schedule and prices',
 
+  'owner.uploadPhotos': 'Upload photos',
+  'owner.workingHours': 'Working hours (from / to)',
+
   'error.VALIDATION_ERROR': 'Invalid input',
   'error.UNAUTHORIZED': 'Please sign in first',
   'error.FORBIDDEN': 'Access denied',

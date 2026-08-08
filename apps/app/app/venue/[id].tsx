@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, View, useWindowDimensions } from 'react-native';
+import { Image, Modal, Pressable, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, DoorOpen, FileText, IdCard, Lightbulb, MapPin, ShowerHead, SquareParking, Users } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, DoorOpen, FileText, IdCard, Lightbulb, MapPin, ShowerHead, SquareParking, Users, X } from 'lucide-react-native';
 import type { Amenity, DayAvailabilityView, VenueDetailView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
@@ -36,6 +36,7 @@ export default function VenueScreen() {
 
   const [venue, setVenue] = useState<VenueDetailView | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [courtId, setCourtId] = useState<string | null>(null);
   const [days, setDays] = useState<DayAvailabilityView[] | null>(null);
@@ -128,16 +129,18 @@ export default function VenueScreen() {
     <View style={{ gap: tokens.spacing.lg, flex: desktop ? 1 : undefined }}>
       {photo ? (
         <View>
-          <Image
-            source={{ uri: photo }}
-            style={{
-              width: '100%',
-              height: desktop ? 300 : 210,
-              backgroundColor: tokens.colors.gray50,
-              borderWidth: tokens.border,
-              borderColor: tokens.colors.text,
-            }}
-          />
+          <Pressable onPress={() => setLightbox(true)}>
+            <Image
+              source={{ uri: photo }}
+              style={{
+                width: '100%',
+                height: desktop ? 300 : 210,
+                backgroundColor: tokens.colors.gray50,
+                borderWidth: tokens.border,
+                borderColor: tokens.colors.text,
+              }}
+            />
+          </Pressable>
           {venue.photos.length > 1 ? (
             <>
               <Pressable
@@ -335,6 +338,39 @@ export default function VenueScreen() {
         ) : undefined
       }
     >
+      <Modal visible={lightbox} transparent animationType="fade" onRequestClose={() => setLightbox(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(10,10,10,0.94)', justifyContent: 'center' }}>
+          <Pressable
+            onPress={() => setLightbox(false)}
+            hitSlop={tokens.hitSlop}
+            style={{ position: 'absolute', top: 20, right: 20, zIndex: 2, padding: 8 }}
+          >
+            <X size={28} color={tokens.colors.white} strokeWidth={2} />
+          </Pressable>
+          {photo ? (
+            <Image source={{ uri: photo }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
+          ) : null}
+          {venue.photos.length > 1 ? (
+            <>
+              <Pressable
+                onPress={() => stepPhoto(-1)}
+                hitSlop={tokens.hitSlop}
+                style={{ position: 'absolute', left: 16, top: '50%', marginTop: -20, padding: 8 }}
+              >
+                <ChevronLeft size={36} color={tokens.colors.white} strokeWidth={2} />
+              </Pressable>
+              <Pressable
+                onPress={() => stepPhoto(1)}
+                hitSlop={tokens.hitSlop}
+                style={{ position: 'absolute', right: 16, top: '50%', marginTop: -20, padding: 8 }}
+              >
+                <ChevronRight size={36} color={tokens.colors.white} strokeWidth={2} />
+              </Pressable>
+            </>
+          ) : null}
+        </View>
+      </Modal>
+
       {desktop ? (
         <View style={{ flexDirection: 'row', gap: tokens.spacing.xxl, alignItems: 'flex-start' }}>
           {infoColumn}

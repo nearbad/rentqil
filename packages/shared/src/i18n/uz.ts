@@ -364,6 +364,9 @@ export const uz = {
   'error.PASSWORD_INVALID': "Email yoki parol noto'g'ri",
   'owner.schedulePrices': 'Jadval va narxlar',
 
+  'owner.uploadPhotos': 'Rasm yuklash',
+  'owner.workingHours': 'Ish vaqti (dan / gacha)',
+
   'error.VALIDATION_ERROR': "Ma'lumotlar noto'g'ri",
   'error.UNAUTHORIZED': 'Avval tizimga kiring',
   'error.FORBIDDEN': 'Ruxsat yoʻq',

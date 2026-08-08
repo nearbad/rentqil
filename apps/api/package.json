@@ -15,6 +15,8 @@
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
+    "@fastify/multipart": "^9.0.1",
+    "@fastify/static": "^8.0.3",
     "@fastify/jwt": "^9.0.2",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",

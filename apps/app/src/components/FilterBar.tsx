@@ -138,7 +138,7 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
             style={{ minWidth: 90 }}
           />
         ) : null}
-        <View style={{ width: desktop ? 260 : '100%', gap: 4 }}>
+        <View style={{ width: desktop ? 210 : '100%', gap: 2 }}>
           <AppText variant="tiny" color={tokens.colors.gray500}>
             {t('catalog.priceUpTo')}: {priceLo.toLocaleString('ru-RU')} - {priceHi.toLocaleString('ru-RU')} so'm
           </AppText>

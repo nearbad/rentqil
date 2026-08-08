@@ -40,10 +40,14 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL in .env}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-rentqil <no-reply@rentqil.com>}
       ESKIZ_EMAIL: ${ESKIZ_EMAIL:-}
       ESKIZ_PASSWORD: ${ESKIZ_PASSWORD:-}
     expose:
       - '3001'
+    volumes:
+      - uploads:/app/apps/api/uploads
 
   web:
     build:
@@ -79,5 +83,6 @@ services:
 
 volumes:
   pgdata:
+  uploads:
   caddy_data:
   caddy_config:

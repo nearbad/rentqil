@@ -346,6 +346,9 @@ export const ru: Record<keyof typeof uz, string> = {
   'error.PASSWORD_INVALID': 'Неверная почта или пароль',
   'owner.schedulePrices': 'Расписание и цены',
 
+  'owner.uploadPhotos': 'Загрузить фото',
+  'owner.workingHours': 'Рабочие часы (с / до)',
+
   'error.VALIDATION_ERROR': 'Некорректные данные',
   'error.UNAUTHORIZED': 'Сначала войдите в аккаунт',
   'error.FORBIDDEN': 'Нет доступа',

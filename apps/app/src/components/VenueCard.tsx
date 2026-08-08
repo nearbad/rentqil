@@ -70,15 +70,17 @@ export function VenueCard({ venue }: { venue: VenueCardView }) {
             {venue.distanceKm !== undefined ? ` · ${t('catalog.kmAway', { km: venue.distanceKm })}` : ''}
           </AppText>
         </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs, alignItems: 'center' }}>
-          {venue.sports.map((s) => (
-            <Chip
-              key={s}
-              label={sportName(s)}
-              small
-              icon={<SportIcon icon={sportIcon(s)} size={12} color={tokens.colors.gray700} />}
-            />
-          ))}
+        <View style={{ marginTop: 'auto', gap: tokens.spacing.sm }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs }}>
+            {venue.sports.map((s) => (
+              <Chip
+                key={s}
+                label={sportName(s)}
+                small
+                icon={<SportIcon icon={sportIcon(s)} size={12} color={tokens.colors.gray700} />}
+              />
+            ))}
+          </View>
           <PolicyBadgeView badge={venue.policyBadge} />
         </View>
       </View>

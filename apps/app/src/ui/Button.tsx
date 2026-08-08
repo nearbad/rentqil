@@ -27,6 +27,8 @@ export function Button({
   const isPrimary = variant === 'primary';
   const isDanger = variant === 'danger';
   const solid = isPrimary || variant === 'secondary';
+  // trailing exclamation marks turn brand red, "Rent qil!" style
+  const bang = title.match(/^(.*?)(!+)$/);
 
   const background = isPrimary ? tokens.colors.text : tokens.colors.white;
   const borderColor = isDanger ? tokens.colors.danger : tokens.colors.text;
@@ -37,7 +39,7 @@ export function Button({
       onPress={onPress}
       disabled={disabled || loading}
       {...animProps}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
         {
           backgroundColor: background,
           borderWidth: variant === 'ghost' ? 0 : tokens.border,
@@ -47,9 +49,10 @@ export function Button({
           paddingVertical: small ? tokens.spacing.sm : 14,
           paddingHorizontal: small ? tokens.spacing.md : tokens.spacing.xl,
           opacity: disabled || loading ? 0.4 : 1,
-          // the block visually sinks into its shadow when pressed
+          // hover lifts the block, pressing sinks it into its shadow
           ...(solid && !disabled && !loading && !pressed ? hardShadow(small ? 'sm' : 'md') : {}),
           ...(pressed && solid ? { transform: [{ translateX: 2 }, { translateY: 2 }] } : {}),
+          ...(hovered && !pressed && solid ? { transform: [{ translateX: -2 }, { translateY: -2 }] } : {}),
           ...(pressed && !solid ? { opacity: 0.6 } : {}),
         },
         style,
@@ -64,7 +67,21 @@ export function Button({
           color={textColor}
           style={{ textTransform: 'uppercase', letterSpacing: 0.8 }}
         >
-          {title}
+          {bang ? (
+            <>
+              {bang[1]}
+              <AppText
+                variant={small ? 'small' : 'body'}
+                weight="bold"
+                color={tokens.colors.accent}
+                style={{ letterSpacing: 0.8 }}
+              >
+                {bang[2]}
+              </AppText>
+            </>
+          ) : (
+            title
+          )}
         </AppText>
       )}
     </Pressable>

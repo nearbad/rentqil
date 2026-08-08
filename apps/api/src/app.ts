@@ -1,6 +1,9 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import authPlugin from './plugins/auth';
+import { uploadsRoutes, UPLOAD_DIR } from './modules/uploads.routes';
 import { AppError } from './lib/errors';
 import { authRoutes } from './modules/auth.routes';
 import { meRoutes } from './modules/me.routes';
@@ -20,6 +23,8 @@ export async function buildApp() {
   });
 
   await app.register(cors, { origin: true });
+  await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+  await app.register(fastifyStatic, { root: UPLOAD_DIR, prefix: '/uploads/' });
   await app.register(authPlugin);
 
   app.setErrorHandler((err: unknown, req, reply) => {
@@ -44,6 +49,7 @@ export async function buildApp() {
   await app.register(splitRoutes);
   await app.register(ownerRoutes);
   await app.register(adminRoutes);
+  await app.register(uploadsRoutes);
 
   return app;
 }

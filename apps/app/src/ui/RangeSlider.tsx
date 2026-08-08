@@ -65,37 +65,36 @@ export function RangeSlider({ min, max, step, valueMin, valueMax, onChange }: Pr
   const hiResponder = useRef(makeResponder('hi')).current;
 
   const onLayout = (e: LayoutChangeEvent) => {
-    setWidth(e.nativeEvent.layout.width);
-    widthRef.current = e.nativeEvent.layout.width;
+    const inner = Math.max(e.nativeEvent.layout.width - 14, 0);
+    setWidth(inner);
+    widthRef.current = inner;
   };
 
   const knobStyle = {
     position: 'absolute' as const,
-    top: -7,
-    width: 20,
-    height: 20,
-    backgroundColor: tokens.colors.white,
-    borderWidth: tokens.border,
-    borderColor: tokens.colors.text,
-    marginLeft: -10,
+    top: -6,
+    width: 14,
+    height: 14,
+    backgroundColor: tokens.colors.text,
+    marginLeft: -7,
   };
 
   return (
-    <View onLayout={onLayout} style={{ height: 24, justifyContent: 'center' }}>
-      <View style={{ height: 4, backgroundColor: tokens.colors.gray150 }} />
+    <View onLayout={onLayout} style={{ height: 16, justifyContent: 'center', paddingHorizontal: 7 }}>
+      <View style={{ height: 2, backgroundColor: tokens.colors.gray300 }} />
       {width > 0 ? (
         <>
           <View
             style={{
               position: 'absolute',
-              left: toX(valueMin),
+              left: toX(valueMin) + 7,
               width: Math.max(toX(valueMax) - toX(valueMin), 0),
-              height: 4,
+              height: 2,
               backgroundColor: tokens.colors.text,
             }}
           />
-          <View {...loResponder.panHandlers} style={[knobStyle, { left: toX(valueMin) }]} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} />
-          <View {...hiResponder.panHandlers} style={[knobStyle, { left: toX(valueMax) }]} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} />
+          <View {...loResponder.panHandlers} style={[knobStyle, { left: toX(valueMin) + 7 }]} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} />
+          <View {...hiResponder.panHandlers} style={[knobStyle, { left: toX(valueMax) + 7 }]} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} />
         </>
       ) : null}
     </View>

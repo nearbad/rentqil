@@ -19,8 +19,10 @@ export const config = {
   apiUrl: process.env.API_URL ?? 'http://localhost:3001',
   // what the browser can reach, used for the oauth redirect uri
   publicApiUrl: process.env.PUBLIC_API_URL ?? process.env.API_URL ?? 'http://localhost:3001',
-  // login codes go out by email, mock logs them to stdout
+  // login codes go out by email: mock logs them, resend actually sends
   emailProvider: process.env.EMAIL_PROVIDER ?? 'mock',
+  resendApiKey: process.env.RESEND_API_KEY ?? '',
+  emailFrom: process.env.EMAIL_FROM ?? 'rentqil <no-reply@rentqil.com>',
   smtp: {
     host: process.env.SMTP_HOST ?? '',
     port: Number(process.env.SMTP_PORT ?? 587),

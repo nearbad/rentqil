@@ -11,7 +11,26 @@ export class MockEmail implements EmailProvider {
   }
 }
 
-// smtp skeleton, wire nodemailer here once real credentials exist
+// resend.com http api, free tier is enough for login codes and reminders.
+// the sending domain must be verified in resend (spf + dkim dns records)
+export class ResendEmail implements EmailProvider {
+  async send(to: string, subject: string, text: string): Promise<void> {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${config.resendApiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ from: config.emailFrom, to: [to], subject, text }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`resend failed: ${res.status} ${body.slice(0, 200)}`);
+    }
+  }
+}
+
+// smtp skeleton, wire nodemailer here if resend ever stops fitting
 export class SmtpEmail implements EmailProvider {
   async send(_to: string, _subject: string, _text: string): Promise<void> {
     // TODO add nodemailer, transport from config.smtp, remember SPF and DKIM
@@ -24,6 +43,7 @@ export class SmtpEmail implements EmailProvider {
 }
 
 export function createEmailProvider(): EmailProvider {
+  if (config.emailProvider === 'resend') return new ResendEmail();
   if (config.emailProvider === 'smtp') return new SmtpEmail();
   return new MockEmail();
 }

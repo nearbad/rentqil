@@ -105,8 +105,8 @@ export async function ownerRoutes(app: FastifyInstance) {
                   scheduleRules: {
                     create: [0, 1, 2, 3, 4, 5, 6].map((day) => ({
                       dayOfWeek: day,
-                      openHour: 8,
-                      closeHour: 23,
+                      openHour: body.openHour ?? 8,
+                      closeHour: Math.max(body.closeHour ?? 23, (body.openHour ?? 8) + 1),
                     })),
                   },
                 },
