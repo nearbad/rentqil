@@ -9,6 +9,7 @@ import {
   myBookings,
   quoteResponse,
 } from '../services/booking.service';
+import { cancelBooking, cancelQuote } from '../services/cancel.service';
 
 export async function bookingsRoutes(app: FastifyInstance) {
   app.get('/bookings/quote', async (req) => {
@@ -29,6 +30,16 @@ export async function bookingsRoutes(app: FastifyInstance) {
 
   app.get('/bookings/my', { preHandler: app.requireUser }, async (req) => {
     return myBookings(req.user!.id);
+  });
+
+  app.get('/bookings/:id/cancel-quote', { preHandler: app.requireUser }, async (req) => {
+    const { id } = req.params as { id: string };
+    return cancelQuote(id, req.user!.id);
+  });
+
+  app.post('/bookings/:id/cancel', { preHandler: app.requireUser }, async (req) => {
+    const { id } = req.params as { id: string };
+    return cancelBooking(id, req.user!.id);
   });
 
   app.get('/bookings/:id', { preHandler: app.requireUser }, async (req) => {

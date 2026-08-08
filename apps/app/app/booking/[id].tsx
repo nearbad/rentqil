@@ -14,6 +14,7 @@ import { Card, ErrorBox, Loading } from '@/ui/bits';
 import { ProviderSelect } from '@/components/ProviderSelect';
 import { PriceBreakdown, StatusBadge } from '@/components/BookingBits';
 import { SplitSection } from '@/components/SplitSection';
+import { CancelSection } from '@/components/CancelSection';
 
 export default function BookingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -136,6 +137,8 @@ export default function BookingScreen() {
             onPress={() => router.push(`/venue/${booking.venueId}`)}
           />
         ) : null}
+
+        {booking.isCreator ? <CancelSection booking={booking} onCancelled={load} /> : null}
       </View>
     </Screen>
   );

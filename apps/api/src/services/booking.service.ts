@@ -6,7 +6,7 @@ import { errors } from '../lib/errors';
 import { notifier } from '../lib/notifier';
 import { getPlatformConfig } from './config.service';
 import { policyBadge } from './venue.service';
-import { commissionFor, quoteBooking, splitEven, type Quote } from '../domain/money';
+import { commissionFor, quoteBooking, splitEven } from '../domain/money';
 import {
   dbDate,
   openHoursForDay,
