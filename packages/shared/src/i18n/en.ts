@@ -376,6 +376,77 @@ export const en: Record<keyof typeof uz, string> = {
   'error.NETWORK': 'Network error, try again',
   'error.UNKNOWN': 'Something went wrong',
 
+  // promo codes
+  'book.promoTitle': 'Promo code',
+  'book.promoPlaceholder': 'Enter promo code',
+  'book.promoApply': 'Apply',
+  'book.promoDiscount': 'Discount',
+  'book.promoApplied': 'Promo applied: {sum} off',
+  'error.PROMO_INVALID': 'Promo code not found',
+  'error.PROMO_EXPIRED': 'Promo code has expired',
+  'error.PROMO_EXHAUSTED': 'Promo code usage limit reached',
+  'error.PHONE_TAKEN': 'This phone is already linked to another account',
+  'error.RATE_LIMITED': 'Too many requests, try again shortly',
+
+  // catalog pagination
+  'catalog.loadMore': 'Load more',
+  'catalog.shownOf': '{shown} / {total}',
+
+  // owner promos
+  'owner.promos': 'Promo codes',
+  'owner.promoAdd': 'Add promo code',
+  'owner.promoCode': 'Code',
+  'owner.promoCodeHint': 'Leave empty to auto-generate',
+  'owner.promoPercent': 'Discount (%)',
+  'owner.promoAmount': 'Discount (UZS)',
+  'owner.promoKindHint': 'Fill exactly one: percent or amount',
+  'owner.promoVenues': 'Which venues',
+  'owner.promoAllVenues': 'All my venues',
+  'owner.promoMaxUses': 'Max uses (optional)',
+  'owner.promoUses': 'Used: {used}',
+  'owner.promoEnds': 'Valid until (YYYY-MM-DD, optional)',
+  'owner.promoActive': 'Active',
+  'owner.promoEmpty': 'No promo codes yet',
+
+  // owner telegram alerts
+  'owner.alerts': 'Booking alerts',
+  'owner.alertsText':
+    'New booking alerts arrive by email. To also get them in Telegram, open the bot, press /start and send your account email - then type the emailed code into the bot.',
+  'owner.alertsOpenBot': 'Open the Telegram bot',
+
+  // partner page
+  'partner.title': 'Become a partner',
+  'partner.subtitle':
+    'List your venue on rentqil: online booking, prepayment and team payments. Leave a request and we will get in touch.',
+  'partner.name': 'Your name or company',
+  'partner.contact': 'Email or Telegram',
+  'partner.contactHint': 'you@example.com or @username',
+  'partner.inn': 'Company tax ID / INN (optional)',
+  'partner.message': 'Briefly about your venues',
+  'partner.submit': 'Send request',
+  'partner.sent': 'Request received',
+  'partner.sentText': 'We will contact you soon.',
+  'partner.contactRequired': 'Enter an email or telegram handle',
+
+  // booking help
+  'bookings.help': 'Help / report a problem',
+
+  // footer and legal pages
+  'footer.privacy': 'Privacy policy',
+  'footer.terms': 'Terms of use',
+  'footer.offer': 'Public offer',
+  'footer.partner': 'Become a partner',
+  'footer.contacts': 'Contacts',
+  'footer.rights': 'All rights reserved',
+
+  // admin extras
+  'admin.venues': 'Venues',
+  'admin.venueSearch': 'Name, address or owner email...',
+  'admin.partnerRequests': 'Partner requests',
+  'admin.partnerEmpty': 'No requests',
+  'admin.adminEditNote': 'Admin edits apply instantly, no moderation',
+  'notif.owner_new_booking': '{venue}: new booking',
+
   'day.0': 'Su',
   'day.1': 'Mo',
   'day.2': 'Tu',

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { BookingView, PaymentProviderId } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
@@ -141,6 +141,19 @@ export default function BookingScreen() {
         ) : null}
 
         {booking.isCreator ? <CancelSection booking={booking} onCancelled={load} /> : null}
+
+        <Button
+          title={t('bookings.help')}
+          variant="ghost"
+          small
+          onPress={() =>
+            Linking.openURL(
+              `mailto:support@rentqil.com?subject=${encodeURIComponent(`rentqil booking ${booking.id}`)}&body=${encodeURIComponent(
+                `${booking.venueName} · ${booking.date} ${hourRange(booking.startHour, booking.endHour)}\n\n`
+              )}`
+            )
+          }
+        />
       </View>
     </Screen>
   );

@@ -5,23 +5,51 @@ export interface QuoteInput {
   slotPricesTiyin: number[];
   // percent of the price charged on top as the platform fee, 0 disables
   serviceFeePercent: number;
+  // promo discount, already capped by the caller or capped here
+  discountTiyin?: number;
 }
 
 export interface Quote {
+  // price of the slots before any discount
   totalTiyin: number;
+  discountTiyin: number;
+  // what the player actually pays for the court, total minus discount
+  netTiyin: number;
   serviceFeeTiyin: number;
   payNowTiyin: number;
 }
 
-// the whole price is paid online up front, plus the service fee
+// the whole price is paid online up front, plus the service fee.
+// the fee is charged on the discounted price
 export function quoteBooking(input: QuoteInput): Quote {
   const totalTiyin = input.slotPricesTiyin.reduce((sum, p) => sum + p, 0);
-  const serviceFeeTiyin = Math.round((totalTiyin * Math.max(input.serviceFeePercent, 0)) / 100);
+  const discountTiyin = Math.min(Math.max(input.discountTiyin ?? 0, 0), totalTiyin);
+  const netTiyin = totalTiyin - discountTiyin;
+  const serviceFeeTiyin = Math.round((netTiyin * Math.max(input.serviceFeePercent, 0)) / 100);
   return {
     totalTiyin,
+    discountTiyin,
+    netTiyin,
     serviceFeeTiyin,
-    payNowTiyin: totalTiyin + serviceFeeTiyin,
+    payNowTiyin: netTiyin + serviceFeeTiyin,
   };
+}
+
+export interface PromoLike {
+  percentOff: number | null;
+  amountOffTiyin: number | null;
+}
+
+// discount for a promo against a base price, rounded to whole soms,
+// never larger than the price itself
+export function promoDiscount(promo: PromoLike, baseTiyin: number): number {
+  let discount = 0;
+  if (promo.percentOff) {
+    discount = Math.round((baseTiyin * promo.percentOff) / 100 / 100) * 100;
+  } else if (promo.amountOffTiyin) {
+    discount = promo.amountOffTiyin;
+  }
+  return Math.min(Math.max(discount, 0), baseTiyin);
 }
 
 export { splitEven } from '@rentqil/shared';

@@ -14,6 +14,8 @@ import { Card, KeyValue, Loading } from '@/ui/bits';
 
 const SECTIONS = [
   { path: '/admin/moderation', key: 'admin.moderation' },
+  { path: '/admin/venues', key: 'admin.venues' },
+  { path: '/admin/partners', key: 'admin.partnerRequests' },
   { path: '/admin/users', key: 'admin.users' },
   { path: '/admin/bookings', key: 'admin.bookings' },
   { path: '/admin/sports', key: 'admin.sports' },

@@ -5,6 +5,8 @@ import { somToTiyin, tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { Screen } from '@/ui/Screen';
+import { AppText } from '@/ui/AppText';
+import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
 import { EmptyState, ErrorBox, Loading } from '@/ui/bits';
 import { VenueCard } from '@/components/VenueCard';
@@ -34,6 +36,8 @@ export function CatalogScreen() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<CatalogFilters>({ sort: 'default' });
   const [items, setItems] = useState<VenueCardView[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [maxPriceSom, setMaxPriceSom] = useState(1_000_000);
   const [error, setError] = useState(false);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
@@ -41,25 +45,38 @@ export function CatalogScreen() {
 
   const query = useMemo(() => buildQuery(filters, search, geo), [filters, search, geo]);
 
-  const load = useCallback(async (qs: string) => {
+  const PAGE = 12;
+
+  const load = useCallback(async (qs: string, offset: number) => {
     setError(false);
+    const sep = qs ? '&' : '?';
     try {
-      const res = await api<{ items: VenueCardView[]; maxPriceTiyin: number }>(`/venues${qs}`);
-      setItems(res.items);
+      const res = await api<{ items: VenueCardView[]; total: number; maxPriceTiyin: number }>(
+        `/venues${qs}${sep}limit=${PAGE}&offset=${offset}`
+      );
+      setItems((prev) => (offset > 0 && prev ? [...prev, ...res.items] : res.items));
+      setTotal(res.total);
       if (res.maxPriceTiyin > 0) setMaxPriceSom(Math.round(res.maxPriceTiyin / 100));
     } catch {
       setError(true);
-      setItems([]);
+      if (offset === 0) setItems([]);
     }
   }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => load(query), 250);
+    debounceRef.current = setTimeout(() => load(query, 0), 250);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [query, load]);
+
+  const loadMore = async () => {
+    if (!items || loadingMore) return;
+    setLoadingMore(true);
+    await load(query, items.length);
+    setLoadingMore(false);
+  };
 
   // browser geolocation for the distance sort, best effort
   useEffect(() => {
@@ -114,6 +131,20 @@ export function CatalogScreen() {
             ))}
           </View>
         )}
+
+        {items && items.length < total ? (
+          <View style={{ alignItems: 'center', gap: tokens.spacing.xs }}>
+            <Button
+              title={t('catalog.loadMore')}
+              variant="secondary"
+              onPress={loadMore}
+              loading={loadingMore}
+            />
+            <AppText variant="tiny" color={tokens.colors.gray500}>
+              {t('catalog.shownOf', { shown: items.length, total })}
+            </AppText>
+          </View>
+        ) : null}
       </View>
     </Screen>
   );

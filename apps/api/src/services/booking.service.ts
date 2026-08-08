@@ -6,7 +6,8 @@ import { errors } from '../lib/errors';
 import { notifier } from '../lib/notifier';
 import { getPlatformConfig } from './config.service';
 import { policyBadge } from './venue.service';
-import { quoteBooking, splitEven } from '../domain/money';
+import { promoDiscount, quoteBooking, splitEven } from '../domain/money';
+import { resolvePromo, type PromoError } from './promo.service';
 import {
   dbDate,
   openHoursForDay,
@@ -20,6 +21,7 @@ import {
 const bookingInclude = {
   court: { include: { venue: { include: { policy: true } } } },
   participants: { orderBy: { isCreator: 'desc' } },
+  promoCode: { select: { code: true } },
 } satisfies Prisma.BookingInclude;
 
 type BookingFull = Prisma.BookingGetPayload<{ include: typeof bookingInclude }>;
@@ -39,6 +41,8 @@ export function bookingView(booking: BookingFull, viewerId: string | null): Book
     endHour: booking.endHour,
     totalTiyin: booking.totalTiyin,
     serviceFeeTiyin: booking.serviceFeeTiyin,
+    discountTiyin: booking.discountTiyin,
+    promoCode: booking.promoCode?.code ?? null,
     payNowTiyin: booking.totalTiyin + booking.serviceFeeTiyin,
     contactPhone: booking.contactPhone,
     playersCount: booking.playersCount,
@@ -67,6 +71,7 @@ interface RangeInput {
   date: string;
   startHour: number;
   endHour: number;
+  promoCode?: string;
 }
 
 // price and fee math for a slot range, throws if the range is not sellable
@@ -90,18 +95,35 @@ export async function quoteRange(input: RangeInput) {
   }
 
   const config = await getPlatformConfig();
+  const base = prices.reduce((s, p) => s + p, 0);
+
+  let promoId: string | null = null;
+  let promoError: PromoError | null = null;
+  let discountTiyin = 0;
+  if (input.promoCode) {
+    const res = await resolvePromo(input.promoCode, court.venue.id, court.venue.ownerId);
+    if (res.promo) {
+      promoId = res.promo.id;
+      discountTiyin = promoDiscount(res.promo, base);
+    } else {
+      promoError = res.error;
+    }
+  }
+
   const quote = quoteBooking({
     slotPricesTiyin: prices,
     serviceFeePercent: config.serviceFeePercent,
+    discountTiyin,
   });
 
-  return { court, config, quote };
+  return { court, config, quote, promoId, promoError };
 }
 
 export async function quoteResponse(input: RangeInput): Promise<BookingQuoteResponse> {
-  const { court, config, quote } = await quoteRange(input);
+  const { court, config, quote, promoError } = await quoteRange(input);
   return {
     ...quote,
+    promoError,
     venueName: court.venue.name,
     courtName: court.name,
     sport: court.sport,
@@ -125,7 +147,12 @@ export async function createBooking(
     split?: { names: string[] };
   }
 ): Promise<BookingView> {
-  const { court, config, quote } = await quoteRange(input);
+  const { court, config, quote, promoId, promoError } = await quoteRange(input);
+  if (promoError) {
+    if (promoError === 'PROMO_EXPIRED') throw errors.promoExpired();
+    if (promoError === 'PROMO_EXHAUSTED') throw errors.promoExhausted();
+    throw errors.promoInvalid();
+  }
 
   // the owner decides how many people fit on the field
   if (court.capacity !== null && input.playersCount > court.capacity) {
@@ -185,8 +212,11 @@ export async function createBooking(
         date: dbDate(input.date),
         startHour: input.startHour,
         endHour: input.endHour,
-        totalTiyin: quote.totalTiyin,
+        // the stored total is the discounted price, refunds build on it
+        totalTiyin: quote.netTiyin,
         serviceFeeTiyin: quote.serviceFeeTiyin,
+        discountTiyin: quote.discountTiyin,
+        promoCodeId: promoId,
         contactPhone: input.contactPhone,
         playersCount: input.playersCount,
         playerNames: split ? [] : input.playerNames,
@@ -254,4 +284,16 @@ export async function confirmedNotify(booking: BookingFull) {
     startHour: booking.startHour,
   };
   await Promise.all([...userIds].map((uid) => notifier.notify(uid, 'booking_confirmed', payload)));
+
+  // the venue owner hears about every new booking: in-app, email, telegram
+  await notifier.notify(booking.court.venue.ownerId, 'owner_new_booking', {
+    bookingId: booking.id,
+    venue: booking.court.venue.name,
+    court: booking.court.name,
+    date: ymdFromDb(booking.date),
+    startHour: booking.startHour,
+    endHour: booking.endHour,
+    amountTiyin: booking.totalTiyin + booking.serviceFeeTiyin,
+    contactPhone: booking.contactPhone,
+  });
 }

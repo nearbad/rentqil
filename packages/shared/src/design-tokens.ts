@@ -39,6 +39,9 @@ export const fontWeight = {
 // web font stack, native falls back to the system grotesque
 export const fontFamily = "Inter, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
+// the lowercase wordmark uses its own face
+export const logoFontFamily = "Raleway, Inter, -apple-system, 'Segoe UI', Roboto, sans-serif";
+
 export const spacing = {
   xs: 4,
   sm: 8,

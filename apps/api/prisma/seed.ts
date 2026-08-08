@@ -54,6 +54,39 @@ const sportProfiles: Record<
 
 const sportCycle = ['football', 'tennis', 'padel', 'basketball', 'volleyball', 'gym'];
 
+// real sport photos from the unsplash cdn, keyed by sport. venues of one
+// sport rotate through the pool so every card leads with a different shot
+const u = (id: string) => `https://images.unsplash.com/photo-${id}?w=900&q=80&auto=format&fit=crop`;
+const sportPhotos: Record<string, string[]> = {
+  football: [
+    u('1459865264687-595d652de67e'),
+    u('1522778119026-d647f0596c20'),
+    u('1431324155629-1a6deb1dec8d'),
+    u('1553778263-73a83bab9b0c'),
+    u('1518604666860-9ed391f76460'),
+    u('1579952363873-27f3bade9f55'),
+  ],
+  tennis: [
+    u('1554068865-24cecd4e34b8'),
+    u('1595435934249-5df7ed86e1c0'),
+    u('1622279457486-62dcc4a431d6'),
+    u('1587280501635-68a0e82cd5ff'),
+  ],
+  padel: [u('1626224583764-f87db24ac4ea'), u('1593341646782-e0b495cff86d'), u('1524015368236-bbf6f72545b6')],
+  basketball: [u('1546519638-68e109498ffc'), u('1519861531473-9200262188bf'), u('1504450758481-7338eba7524a')],
+  volleyball: [u('1592656094267-764a45160876'), u('1612872087720-bb876e2e67d1')],
+  gym: [u('1534438327276-14e5300c3a48'), u('1571902943202-507ec2618e8f'), u('1517836357463-d25dfeac3438')],
+};
+
+// two photos per venue, the leading one unique within the sport
+function photosFor(sport: string, nthOfSport: number): string[] {
+  const pool = sportPhotos[sport] ?? [];
+  if (pool.length === 0) return [];
+  const first = pool[nthOfSport % pool.length]!;
+  const second = pool[(nthOfSport + 1) % pool.length]!;
+  return first === second ? [first] : [first, second];
+}
+
 async function main() {
   await prisma.platformConfig.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
 
@@ -87,15 +120,26 @@ async function main() {
     create: { email: 'player@rentqil.com', phone: '+998907654321', name: 'Timur', locale: 'ru' },
   });
 
+  const seenOfSport: Record<string, number> = {};
   for (let i = 0; i < regions.length; i++) {
     const spot = regions[i]!;
     const sport = sportCycle[i % sportCycle.length]!;
     const profile = sportProfiles[sport]!;
     const name = `${spot.city} ${profile.label}`;
+    const nthOfSport = seenOfSport[sport] ?? 0;
+    seenOfSport[sport] = nthOfSport + 1;
+    const photos = photosFor(sport, nthOfSport);
 
     const existing = await prisma.venue.findFirst({ where: { name } });
     if (existing) {
-      console.log(`venue exists, skip: ${name}`);
+      // keep the venue but refresh the demo photos when they are still
+      // the old random placeholders
+      if (existing.photos.some((p) => p.includes('picsum.photos'))) {
+        await prisma.venue.update({ where: { id: existing.id }, data: { photos } });
+        console.log(`venue photos refreshed: ${name}`);
+      } else {
+        console.log(`venue exists, skip: ${name}`);
+      }
       continue;
     }
 
@@ -113,10 +157,7 @@ async function main() {
         district: spot.city,
         lat: spot.lat,
         lng: spot.lng,
-        photos: [
-          `https://picsum.photos/seed/rentqil-${spot.region}-1/900/600`,
-          `https://picsum.photos/seed/rentqil-${spot.region}-2/900/600`,
-        ],
+        photos,
         amenities: profile.indoor ? ['locker_room', 'shower', 'parking'] : ['locker_room', 'lighting', 'parking'],
         status: 'approved',
         // every third venue wants documents, names come with them

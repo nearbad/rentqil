@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   allocateProportional,
+  promoDiscount,
   quoteBooking,
   refundForCancellation,
   splitEven,
@@ -36,6 +37,45 @@ describe('quoteBooking', () => {
     const q = quoteBooking({ slotPricesTiyin: [10_000_000], serviceFeePercent: -5 });
     expect(q.serviceFeeTiyin).toBe(0);
   });
+
+  it('a promo discount reduces the fee base and the total due', () => {
+    const q = quoteBooking({
+      slotPricesTiyin: [30_000_000],
+      serviceFeePercent: 10,
+      discountTiyin: 5_000_000,
+    });
+    expect(q.totalTiyin).toBe(30_000_000);
+    expect(q.discountTiyin).toBe(5_000_000);
+    expect(q.netTiyin).toBe(25_000_000);
+    expect(q.serviceFeeTiyin).toBe(2_500_000);
+    expect(q.payNowTiyin).toBe(27_500_000);
+  });
+
+  it('a discount larger than the price is capped, never a negative total', () => {
+    const q = quoteBooking({
+      slotPricesTiyin: [10_000_000],
+      serviceFeePercent: 10,
+      discountTiyin: 99_000_000,
+    });
+    expect(q.netTiyin).toBe(0);
+    expect(q.payNowTiyin).toBe(0);
+  });
+});
+
+describe('promoDiscount', () => {
+  it('percent promos round to whole soms', () => {
+    // 15% of 333 333 som = 49 999.95, rounds to 50 000 som
+    expect(promoDiscount({ percentOff: 15, amountOffTiyin: null }, 33_333_300)).toBe(5_000_000);
+  });
+
+  it('fixed promos never exceed the price', () => {
+    expect(promoDiscount({ percentOff: null, amountOffTiyin: 5_000_000 }, 3_000_000)).toBe(3_000_000);
+    expect(promoDiscount({ percentOff: null, amountOffTiyin: 5_000_000 }, 30_000_000)).toBe(5_000_000);
+  });
+
+  it('an empty promo gives nothing', () => {
+    expect(promoDiscount({ percentOff: null, amountOffTiyin: null }, 30_000_000)).toBe(0);
+  });
 });
 
 describe('splitEven', () => {
@@ -43,9 +83,17 @@ describe('splitEven', () => {
     expect(splitEven(9_000_000, 3)).toEqual([3_000_000, 3_000_000, 3_000_000]);
   });
 
-  it('hands the remainder to the first shares and keeps the exact sum', () => {
+  it('rounds friend shares to whole soms, the creator absorbs the difference', () => {
+    // 100 000 som for three: friends pay 33 333, the creator pays 33 334
     const shares = splitEven(10_000_000, 3);
-    expect(shares).toEqual([3_333_334, 3_333_333, 3_333_333]);
+    expect(shares).toEqual([3_333_400, 3_333_300, 3_333_300]);
+    expect(shares.reduce((a, b) => a + b, 0)).toBe(10_000_000);
+  });
+
+  it('the creator can pay slightly less when rounding goes up', () => {
+    // 100 000 som for six: friends pay 16 667, the creator pays 16 665
+    const shares = splitEven(10_000_000, 6);
+    expect(shares).toEqual([1_666_500, 1_666_700, 1_666_700, 1_666_700, 1_666_700, 1_666_700]);
     expect(shares.reduce((a, b) => a + b, 0)).toBe(10_000_000);
   });
 
@@ -55,12 +103,15 @@ describe('splitEven', () => {
       [1, 7],
       [999_999, 30],
       [0, 5],
+      [12_345_678, 4],
     ] as const) {
       const shares = splitEven(amount, parts);
       expect(shares).toHaveLength(parts);
       expect(shares.reduce((a, b) => a + b, 0)).toBe(amount);
-      // shares differ by at most one tiyin
-      expect(Math.max(...shares) - Math.min(...shares)).toBeLessThanOrEqual(1);
+      // no share is ever negative
+      expect(Math.min(...shares)).toBeGreaterThanOrEqual(0);
+      // friend shares are whole soms
+      shares.slice(1).forEach((s) => expect(s % 100).toBe(0));
     }
   });
 

@@ -1,25 +1,24 @@
 import React from 'react';
 import {
   Bike,
-  CircleDot,
   Dumbbell,
   Footprints,
-  Goal,
   Medal,
   Swords,
   Table2,
-  Target,
   Volleyball,
   Waves,
   type LucideIcon,
 } from 'lucide-react-native';
 import { tokens, type SportIcon as SportIconCode } from '@rentqil/shared';
+import { BasketballBall, FootballBall, TennisBall, type BallIconProps } from './BallIcons';
 
-// icon codes come from SPORT_ICONS in shared, the admin picks one per sport
-const ICONS: Record<SportIconCode, LucideIcon> = {
-  football: Goal,
-  tennis: CircleDot,
-  basketball: Target,
+// icon codes come from SPORT_ICONS in shared, the admin picks one per sport.
+// the ball sports use our own glyphs, lucide has no real balls
+const ICONS: Record<SportIconCode, LucideIcon | React.FC<BallIconProps>> = {
+  football: FootballBall,
+  tennis: TennisBall,
+  basketball: BasketballBall,
   volleyball: Volleyball,
   gym: Dumbbell,
   swim: Waves,

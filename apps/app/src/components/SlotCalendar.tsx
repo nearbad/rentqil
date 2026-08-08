@@ -54,36 +54,46 @@ export function SlotCalendar({ days, selectedDate, onSelectDate, selectedHours, 
     onToggleHour(hour);
   };
 
+  const HEADER_H = 34;
+  const ROW_H = 33; // cell height plus the 4px row gap, keeps both columns aligned
+
   return (
     <View style={{ gap: tokens.spacing.md }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View>
-          {/* header row: weekday and date over each column */}
-          <View style={{ flexDirection: 'row' }}>
-            <View style={{ width: LABEL_W }} />
-            {days.map((d) => {
-              const dayIndex = new Date(`${d.date}T00:00:00`).getDay();
-              return (
-                <View key={d.date} style={{ width: CELL_W, alignItems: 'center', paddingBottom: 6 }}>
-                  <AppText variant="tiny" weight="bold" style={{ textTransform: 'uppercase' }}>
-                    {t(`day.${dayIndex}` as never)}
-                  </AppText>
-                  <AppText variant="tiny" color={tokens.colors.gray500}>
-                    {d.date.slice(5).split('-').reverse().join('.')}
-                  </AppText>
-                </View>
-              );
-            })}
-          </View>
-
+      <View style={{ flexDirection: 'row' }}>
+        {/* the hour column stays put while a month of days scrolls next to it */}
+        <View style={{ width: LABEL_W }}>
+          <View style={{ height: HEADER_H }} />
           {hours.map((hour) => (
-            <View key={hour} style={{ flexDirection: 'row', marginBottom: 4 }}>
-              <View style={{ width: LABEL_W, justifyContent: 'center' }}>
-                <AppText variant="tiny" weight="semibold">
-                  {String(hour).padStart(2, '0')}:00 - {String(hour + 1).padStart(2, '0')}:00
-                </AppText>
-              </View>
+            <View key={hour} style={{ height: ROW_H, justifyContent: 'center' }}>
+              <AppText variant="tiny" weight="semibold">
+                {String(hour).padStart(2, '0')}:00 - {String(hour + 1).padStart(2, '0')}:00
+              </AppText>
+            </View>
+          ))}
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator style={{ flex: 1 }}>
+          <View style={{ paddingBottom: tokens.spacing.sm }}>
+            {/* header row: weekday and date over each column */}
+            <View style={{ flexDirection: 'row', height: HEADER_H }}>
               {days.map((d) => {
+                const dayIndex = new Date(`${d.date}T00:00:00`).getDay();
+                return (
+                  <View key={d.date} style={{ width: CELL_W, alignItems: 'center' }}>
+                    <AppText variant="tiny" weight="bold" style={{ textTransform: 'uppercase' }}>
+                      {t(`day.${dayIndex}` as never)}
+                    </AppText>
+                    <AppText variant="tiny" color={tokens.colors.gray500}>
+                      {d.date.slice(5).split('-').reverse().join('.')}
+                    </AppText>
+                  </View>
+                );
+              })}
+            </View>
+
+            {hours.map((hour) => (
+              <View key={hour} style={{ flexDirection: 'row', height: ROW_H }}>
+                {days.map((d) => {
                 const slot = d.slots.find((s) => s.hour === hour);
                 if (!slot) {
                   // outside working hours or already in the past
@@ -93,7 +103,7 @@ export function SlotCalendar({ days, selectedDate, onSelectDate, selectedHours, 
                 const palette = cellColors(slot, selected);
                 const disabled = slot.state !== 'free';
                 return (
-                  <View key={d.date} style={{ width: CELL_W, paddingHorizontal: 2 }}>
+                  <View key={d.date} style={{ width: CELL_W, paddingHorizontal: 2, justifyContent: 'flex-start' }}>
                     <Pressable
                       disabled={disabled}
                       onPress={() => pick(d.date, hour)}
@@ -116,10 +126,11 @@ export function SlotCalendar({ days, selectedDate, onSelectDate, selectedHours, 
                   </View>
                 );
               })}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.lg }}>
         <LegendSwatch bg={tokens.colors.white} border={tokens.colors.text} label={t('venue.slotFree')} />

@@ -81,8 +81,6 @@ export default function ProfileScreen() {
   const [phone, setPhone] = useState(me?.phone ?? '+998');
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [applyMessage, setApplyMessage] = useState('');
 
   const changeLocale = async (next: Locale) => {
     setLocale(next);
@@ -112,16 +110,6 @@ export default function ProfileScreen() {
       setTimeout(() => setSavedFlash(false), 1500);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const applyOwner = async () => {
-    setApplying(true);
-    try {
-      await api('/owner/apply', { method: 'POST', body: { message: applyMessage.trim() || undefined } });
-      await refresh();
-    } finally {
-      setApplying(false);
     }
   };
 
@@ -214,13 +202,11 @@ export default function ProfileScreen() {
                 <AppText variant="small" color={tokens.colors.gray500}>
                   {t('profile.applyText')}
                 </AppText>
-                <Input
-                  value={applyMessage}
-                  onChangeText={setApplyMessage}
-                  placeholder={t('profile.applyMessage')}
-                  multiline
+                <Button
+                  title={t('partner.title')}
+                  onPress={() => router.push('/partner')}
+                  variant="secondary"
                 />
-                <Button title={t('profile.apply')} onPress={applyOwner} loading={applying} variant="secondary" />
               </>
             )}
           </Card>

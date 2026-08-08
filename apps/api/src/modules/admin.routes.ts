@@ -16,8 +16,10 @@ import {
   moderationDecisionSchema,
   sportTypeCreateSchema,
   sportTypeUpdateSchema,
+  venueUpsertSchema,
   ymdSchema,
 } from '@rentqil/shared';
+import type { PartnerRequestView } from '@rentqil/shared';
 import { z } from 'zod';
 import { prisma, Prisma } from '../lib/db';
 import { parse } from '../lib/validate';
@@ -26,7 +28,8 @@ import { notifier } from '../lib/notifier';
 import { invalidateConfigCache } from '../services/config.service';
 import { bookingView } from '../services/booking.service';
 import { refundPayment } from '../services/payment.service';
-import { sportTypeView } from '../services/venue.service';
+import { ownerVenueView } from '../services/owner.service';
+import { sportTypeView, venueInclude } from '../services/venue.service';
 import { dbDate } from '../domain/slots';
 
 // which venue fields land in the moderation diff for edits
@@ -142,6 +145,77 @@ export async function adminRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // full power over venues: list everything, edit anything directly,
+  // no moderation queue in the way. courts, schedules and prices are
+  // reachable through the owner endpoints which already let admins in
+
+  app.get('/admin/venues', adminOnly, async (req) => {
+    const { q } = parse(z.object({ q: z.string().trim().max(100).optional() }), req.query);
+    const where: Prisma.VenueWhereInput = q
+      ? {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' } },
+            { address: { contains: q, mode: 'insensitive' } },
+            { owner: { email: { contains: q, mode: 'insensitive' } } },
+          ],
+        }
+      : {};
+    const venues = await prisma.venue.findMany({
+      where,
+      include: { ...venueInclude, owner: { select: { email: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    return {
+      items: await Promise.all(
+        venues.map(async (v) => ({
+          ...(await ownerVenueView(v)),
+          ownerEmail: v.owner.email,
+          ownerName: v.owner.name,
+        }))
+      ),
+    };
+  });
+
+  app.get('/admin/venues/:id', adminOnly, async (req) => {
+    const { id } = req.params as { id: string };
+    const venue = await prisma.venue.findUnique({ where: { id }, include: venueInclude });
+    if (!venue) throw errors.notFound('venue');
+    return ownerVenueView(venue);
+  });
+
+  const adminVenuePatchSchema = venueUpsertSchema.partial().extend({
+    status: z.enum(['pending', 'approved', 'rejected']).optional(),
+  });
+
+  app.patch('/admin/venues/:id', adminOnly, async (req) => {
+    const { id } = req.params as { id: string };
+    const venue = await prisma.venue.findUnique({ where: { id } });
+    if (!venue) throw errors.notFound('venue');
+    const body = parse(adminVenuePatchSchema, req.body);
+    // the wizard-only creation fields make no sense on a direct edit
+    const { sport, indoor, capacity, openHour, closeHour, policy, priceTiyin,
+      eveningPriceTiyin, weekendPriceTiyin, ...fields } = body;
+    await prisma.venue.update({
+      where: { id },
+      data: {
+        ...fields,
+        // an admin edit is final, drop whatever waited for moderation
+        pendingChanges: Prisma.DbNull,
+        moderationComment: null,
+      },
+    });
+    if (policy) {
+      await prisma.cancellationPolicy.upsert({
+        where: { venueId: id },
+        update: policy,
+        create: { venueId: id, ...policy },
+      });
+    }
+    const updated = await prisma.venue.findUnique({ where: { id }, include: venueInclude });
+    return ownerVenueView(updated!);
+  });
+
   // users and owner applications
 
   app.get('/admin/users', adminOnly, async (req) => {
@@ -227,6 +301,39 @@ export async function adminRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // partner requests from the public form
+
+  app.get('/admin/partner-requests', adminOnly, async () => {
+    const rows = await prisma.partnerRequest.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
+    const items: PartnerRequestView[] = rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      contact: r.contact,
+      inn: r.inn,
+      message: r.message,
+      status: r.status,
+      adminComment: r.adminComment,
+      createdAt: r.createdAt.toISOString(),
+    }));
+    return { items };
+  });
+
+  app.post('/admin/partner-requests/:id', adminOnly, async (req) => {
+    const { id } = req.params as { id: string };
+    const { approve, comment } = parse(applicationDecisionSchema, req.body);
+    const found = await prisma.partnerRequest.findUnique({ where: { id } });
+    if (!found) throw errors.notFound('request');
+    await prisma.partnerRequest.update({
+      where: { id },
+      data: {
+        status: approve ? 'approved' : 'rejected',
+        adminComment: comment ?? null,
+        decidedAt: new Date(),
+      },
+    });
+    return { ok: true };
+  });
+
   // cross platform bookings and payments
 
   app.get('/admin/bookings', adminOnly, async (req) => {
@@ -248,6 +355,7 @@ export async function adminRoutes(app: FastifyInstance) {
       include: {
         court: { include: { venue: { include: { policy: true } } } },
         participants: { orderBy: { isCreator: 'desc' } },
+        promoCode: { select: { code: true } },
         user: true,
       },
       orderBy: { createdAt: 'desc' },

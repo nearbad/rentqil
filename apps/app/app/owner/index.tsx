@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { BarChart3, CalendarDays, ChevronRight, Plus, Wallet } from 'lucide-react-native';
+import { BarChart3, CalendarDays, ChevronRight, Plus, TicketPercent, Wallet } from 'lucide-react-native';
 import type { OwnerVenueView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
@@ -61,6 +61,7 @@ export default function OwnerHome() {
           {navCard(<CalendarDays size={20} color={tokens.colors.text} strokeWidth={1.6} />, t('owner.bookings'), '/owner/bookings')}
           {navCard(<Wallet size={20} color={tokens.colors.text} strokeWidth={1.6} />, t('owner.finance'), '/owner/finance')}
           {navCard(<BarChart3 size={20} color={tokens.colors.text} strokeWidth={1.6} />, t('owner.stats'), '/owner/stats')}
+          {navCard(<TicketPercent size={20} color={tokens.colors.text} strokeWidth={1.6} />, t('owner.promos'), '/owner/promos')}
         </View>
 
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

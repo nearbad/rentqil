@@ -31,7 +31,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     res = await fetch(`${API_URL}${path}`, {
       method: options.method ?? 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),

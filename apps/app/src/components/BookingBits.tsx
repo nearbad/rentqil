@@ -78,7 +78,16 @@ export function PriceBreakdown({ booking }: { booking: BookingView }) {
   const { t, locale } = useI18n();
   return (
     <View style={{ gap: tokens.spacing.sm }}>
-      <KeyValue label={t('book.total')} value={money(booking.totalTiyin, locale)} />
+      <KeyValue
+        label={t('book.total')}
+        value={money(booking.totalTiyin + booking.discountTiyin, locale)}
+      />
+      {booking.discountTiyin > 0 ? (
+        <KeyValue
+          label={`${t('book.promoDiscount')}${booking.promoCode ? ` (${booking.promoCode})` : ''}`}
+          value={`-${money(booking.discountTiyin, locale)}`}
+        />
+      ) : null}
       {booking.serviceFeeTiyin > 0 ? (
         <KeyValue label={t('book.serviceFee')} value={money(booking.serviceFeeTiyin, locale)} />
       ) : null}

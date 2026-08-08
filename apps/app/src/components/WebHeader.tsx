@@ -64,9 +64,9 @@ export function WebHeader() {
             ...(hovered ? { transform: [{ rotate: '-2deg' }] } : {}),
           })}
         >
-          <AppText variant="h3" color={tokens.colors.white} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
-            RENTQIL
-            <AppText variant="h3" color={tokens.colors.accent} style={{ letterSpacing: 1 }}>
+          <AppText variant="h3" color={tokens.colors.white} style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}>
+            rentqil
+            <AppText variant="h3" color={tokens.colors.accent} style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}>
               !
             </AppText>
           </AppText>

@@ -376,6 +376,77 @@ export const ru: Record<keyof typeof uz, string> = {
   'error.NETWORK': 'Ошибка сети, попробуйте ещё раз',
   'error.UNKNOWN': 'Что-то пошло не так',
 
+  // promo codes
+  'book.promoTitle': 'Промокод',
+  'book.promoPlaceholder': 'Введите промокод',
+  'book.promoApply': 'Применить',
+  'book.promoDiscount': 'Скидка',
+  'book.promoApplied': 'Промокод применён: скидка {sum}',
+  'error.PROMO_INVALID': 'Такой промокод не найден',
+  'error.PROMO_EXPIRED': 'Срок действия промокода истёк',
+  'error.PROMO_EXHAUSTED': 'Лимит использований промокода исчерпан',
+  'error.PHONE_TAKEN': 'Этот номер уже привязан к другому аккаунту',
+  'error.RATE_LIMITED': 'Слишком много запросов, попробуйте чуть позже',
+
+  // catalog pagination
+  'catalog.loadMore': 'Показать ещё',
+  'catalog.shownOf': '{shown} / {total}',
+
+  // owner promos
+  'owner.promos': 'Промокоды',
+  'owner.promoAdd': 'Добавить промокод',
+  'owner.promoCode': 'Код',
+  'owner.promoCodeHint': 'Оставьте пустым - сгенерируется автоматически',
+  'owner.promoPercent': 'Скидка (%)',
+  'owner.promoAmount': 'Скидка (UZS)',
+  'owner.promoKindHint': 'Заполните только одно: % или сумму',
+  'owner.promoVenues': 'Для каких площадок',
+  'owner.promoAllVenues': 'Все мои площадки',
+  'owner.promoMaxUses': 'Сколько раз можно использовать (необязательно)',
+  'owner.promoUses': 'Использован: {used}',
+  'owner.promoEnds': 'Действует до (YYYY-MM-DD, необязательно)',
+  'owner.promoActive': 'Активен',
+  'owner.promoEmpty': 'Промокодов пока нет',
+
+  // owner telegram alerts
+  'owner.alerts': 'Уведомления о бронях',
+  'owner.alertsText':
+    'Уведомления о новых бронях приходят на email. Чтобы получать их и в Telegram, откройте бота, нажмите /start и отправьте email вашего аккаунта - код из письма введите боту.',
+  'owner.alertsOpenBot': 'Открыть Telegram-бота',
+
+  // partner page
+  'partner.title': 'Стать партнёром',
+  'partner.subtitle':
+    'Разместите свою площадку на rentqil: онлайн-бронь, предоплата и командные платежи. Оставьте заявку - мы свяжемся с вами.',
+  'partner.name': 'Ваше имя или название организации',
+  'partner.contact': 'Email или Telegram',
+  'partner.contactHint': 'vy@example.com или @username',
+  'partner.inn': 'ИНН юрлица (необязательно)',
+  'partner.message': 'Коротко о ваших площадках',
+  'partner.submit': 'Отправить заявку',
+  'partner.sent': 'Заявка принята',
+  'partner.sentText': 'Мы скоро свяжемся с вами.',
+  'partner.contactRequired': 'Укажите email или telegram',
+
+  // booking help
+  'bookings.help': 'Помощь / пожаловаться',
+
+  // footer and legal pages
+  'footer.privacy': 'Политика конфиденциальности',
+  'footer.terms': 'Условия использования',
+  'footer.offer': 'Публичная оферта',
+  'footer.partner': 'Стать партнёром',
+  'footer.contacts': 'Контакты',
+  'footer.rights': 'Все права защищены',
+
+  // admin extras
+  'admin.venues': 'Площадки',
+  'admin.venueSearch': 'Название, адрес или email владельца...',
+  'admin.partnerRequests': 'Заявки партнёров',
+  'admin.partnerEmpty': 'Заявок нет',
+  'admin.adminEditNote': 'Правки админа применяются сразу, без модерации',
+  'notif.owner_new_booking': '{venue}: новая бронь',
+
   'day.0': 'Вс',
   'day.1': 'Пн',
   'day.2': 'Вт',

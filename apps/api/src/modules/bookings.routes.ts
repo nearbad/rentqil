@@ -14,7 +14,13 @@ import { cancelBooking, cancelQuote } from '../services/cancel.service';
 export async function bookingsRoutes(app: FastifyInstance) {
   app.get('/bookings/quote', async (req) => {
     const q = parse(quoteQuerySchema, req.query);
-    return quoteResponse({ courtId: q.courtId, date: q.date, startHour: q.start, endHour: q.end });
+    return quoteResponse({
+      courtId: q.courtId,
+      date: q.date,
+      startHour: q.start,
+      endHour: q.end,
+      promoCode: q.promo,
+    });
   });
 
   app.post('/bookings', { preHandler: app.requireUser }, async (req) => {
@@ -28,6 +34,7 @@ export async function bookingsRoutes(app: FastifyInstance) {
       playersCount: body.playersCount,
       playerNames: body.playerNames,
       split: body.split,
+      promoCode: body.promoCode,
     });
   });
 

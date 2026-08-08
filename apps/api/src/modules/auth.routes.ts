@@ -44,7 +44,7 @@ async function issueSession(app: FastifyInstance, userId: string) {
 }
 
 export async function authRoutes(app: FastifyInstance) {
-  app.post('/auth/otp/request', async (req) => {
+  app.post('/auth/otp/request', { config: { rateLimit: { max: 10, windowMs: 600_000 } } }, async (req) => {
     const { email } = parse(otpRequestSchema, req.body);
 
     const last = await prisma.otpCode.findFirst({
@@ -69,7 +69,7 @@ export async function authRoutes(app: FastifyInstance) {
     return { ok: true, ...(config.otpDevEcho ? { devCode: code } : {}) };
   });
 
-  app.post('/auth/otp/verify', async (req) => {
+  app.post('/auth/otp/verify', { config: { rateLimit: { max: 20, windowMs: 600_000 } } }, async (req) => {
     const { email, code } = parse(otpVerifySchema, req.body);
 
     const otp = await prisma.otpCode.findFirst({
@@ -102,7 +102,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   // classic email plus password. registration is not email verified yet,
   // the smtp stub blocks that; TODO send a confirm link once smtp is live
-  app.post('/auth/register', async (req) => {
+  app.post('/auth/register', { config: { rateLimit: { max: 10, windowMs: 3_600_000 } } }, async (req) => {
     const { email, password } = parse(passwordAuthSchema, req.body);
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing?.passwordHash) throw errors.emailTaken();
@@ -123,7 +123,7 @@ export async function authRoutes(app: FastifyInstance) {
     return issueSession(app, user.id);
   });
 
-  app.post('/auth/password/login', async (req) => {
+  app.post('/auth/password/login', { config: { rateLimit: { max: 15, windowMs: 600_000 } } }, async (req) => {
     const { email, password } = parse(passwordAuthSchema, req.body);
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {

@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
 import { WebHeader } from '@/components/WebHeader';
+import { SiteFooter } from '@/components/SiteFooter';
 
 interface Props {
   title?: string;
@@ -77,6 +78,7 @@ export function Screen({ title, back, right, children, scroll = true, padded = t
       {scroll ? (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           {body}
+          <SiteFooter />
         </ScrollView>
       ) : (
         <View style={{ flex: 1 }}>{body}</View>

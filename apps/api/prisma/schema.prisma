@@ -80,6 +80,8 @@ model User {
   locale    Locale    @default(uz)
   blockedAt DateTime?
   createdAt DateTime  @default(now())
+  // telegram chat linked through the alert bot, owners get booking alerts there
+  telegramChatId String? @unique
 
   venues           Venue[]
   bookings         Booking[]
@@ -88,6 +90,39 @@ model User {
   ownerApplication OwnerApplication?
   payouts          Payout[]
   paymentsMade     Payment[]
+  promoCodes       PromoCode[]
+  telegramLinks    TelegramLinkCode[]
+}
+
+// links a telegram chat to an account: the bot asks for the account email,
+// we mail a code there, the user types the code back into the chat
+model TelegramLinkCode {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  chatId     String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([chatId, createdAt])
+}
+
+// "become a partner" requests from the public page, no account needed
+model PartnerRequest {
+  id           String            @id @default(cuid())
+  name         String
+  // email or telegram handle, one free field
+  contact      String
+  // legal entity tax id, optional
+  inn          String?
+  message      String?
+  status       ApplicationStatus @default(pending)
+  adminComment String?
+  createdAt    DateTime          @default(now())
+  decidedAt    DateTime?
 }
 
 model OwnerApplication {
@@ -225,6 +260,26 @@ model BlockedSlot {
   @@index([courtId, date])
 }
 
+// owner made discount code for their venues, fixed sum or percent
+model PromoCode {
+  id      String @id @default(cuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+  // stored uppercase, entered case insensitively
+  code    String @unique
+  // exactly one of the two is set
+  percentOff     Int?
+  amountOffTiyin Int?
+  // owner venue ids this code covers, empty means every venue of the owner
+  venueIds String[] @default([])
+  active   Boolean  @default(true)
+  maxUses  Int?
+  endsAt   DateTime?
+  createdAt DateTime @default(now())
+
+  bookings Booking[]
+}
+
 model Booking {
   id      String @id @default(cuid())
   courtId String
@@ -238,9 +293,14 @@ model Booking {
   status    BookingStatus @default(pending_payment)
 
   // money snapshot at creation time, integer tiyin
-  // the full price is paid online, plus a non refundable service fee
+  // the full price is paid online, plus a non refundable service fee.
+  // totalTiyin is the price after the promo discount, discountTiyin
+  // remembers how much the promo took off the original price
   totalTiyin      Int
   serviceFeeTiyin Int
+  discountTiyin   Int        @default(0)
+  promoCodeId     String?
+  promoCode       PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
   // phone of the person responsible for the booking
   contactPhone    String @default("")
   // party size, capped by the court capacity when the owner set one
@@ -324,7 +384,7 @@ model PlatformConfig {
   serviceFeePercent     Int      @default(10)
   bookingTtlMinutes     Int      @default(15)
   splitTtlMinutes       Int      @default(60)
-  calendarDays          Int      @default(7)
+  calendarDays          Int      @default(30)
   slotMinutes           Int      @default(60)
   reminderHours         Int      @default(2)
   updatedAt             DateTime @updatedAt

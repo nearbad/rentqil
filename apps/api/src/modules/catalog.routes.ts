@@ -16,7 +16,7 @@ import {
   venueInclude,
   type CourtWithRules,
 } from '../services/venue.service';
-import { openHoursForDay, rangesOverlap, weekdayOf, ymdFromDb } from '../domain/slots';
+import { openHoursForDay, priceForHour, rangesOverlap, weekdayOf, ymd, ymdFromDb } from '../domain/slots';
 
 export async function catalogRoutes(app: FastifyInstance) {
   // active sports for filters and forms, ordered the way the admin wants
@@ -79,6 +79,8 @@ export async function catalogRoutes(app: FastifyInstance) {
       const hour = q.hour;
       const date = q.date;
       const weekday = weekdayOf(date);
+      const now = new Date();
+      const isPast = date < ymd(now) || (date === ymd(now) && hour <= now.getHours());
       const courtIds = cards.flatMap(({ matching }) => matching.map((c) => c.id));
       const { bookings, blocked } = await busyRanges(courtIds, date, date);
       const busyByCourt = new Map<string, { startHour: number; endHour: number }[]>();
@@ -89,14 +91,18 @@ export async function catalogRoutes(app: FastifyInstance) {
         busyByCourt.set(b.courtId, list);
       }
 
-      cards = cards.filter(({ matching }) =>
-        matching.some((court) => {
-          const open = openHoursForDay(court.scheduleRules, weekday);
-          if (!open.includes(hour)) return false;
-          const busy = busyByCourt.get(court.id) ?? [];
-          return !busy.some((r) => rangesOverlap(hour, hour + 1, r.startHour, r.endHour));
-        })
-      );
+      cards = isPast
+        ? []
+        : cards.filter(({ matching }) =>
+            matching.some((court) => {
+              const open = openHoursForDay(court.scheduleRules, weekday);
+              if (!open.includes(hour)) return false;
+              // an hour without a price rule is not sellable, never "free"
+              if (priceForHour(court.priceRules, weekday, hour) === null) return false;
+              const busy = busyByCourt.get(court.id) ?? [];
+              return !busy.some((r) => rangesOverlap(hour, hour + 1, r.startHour, r.endHour));
+            })
+          );
     }
 
     let items = cards.map(({ card }) => card);
@@ -114,7 +120,12 @@ export async function catalogRoutes(app: FastifyInstance) {
         .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
     }
 
-    return { items, maxPriceTiyin };
+    const total = items.length;
+    const offset = q.offset ?? 0;
+    const limit = q.limit ?? 12;
+    items = items.slice(offset, offset + limit);
+
+    return { items, total, maxPriceTiyin };
   });
 
   app.get('/venues/:id', async (req) => {
@@ -137,6 +148,8 @@ export async function catalogRoutes(app: FastifyInstance) {
     const view: PlatformConfigView = {
       serviceFeePercent: c.serviceFeePercent,
       googleAuthEnabled: Boolean(env.google.clientId && env.google.clientSecret),
+      telegramBotUsername:
+        env.telegram.botToken && env.telegram.botUsername ? env.telegram.botUsername : null,
       bookingTtlMinutes: c.bookingTtlMinutes,
       splitTtlMinutes: c.splitTtlMinutes,
       calendarDays: c.calendarDays,

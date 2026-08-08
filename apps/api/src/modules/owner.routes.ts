@@ -6,6 +6,8 @@ import {
   ownerApplySchema,
   policySchema,
   priceSetSchema,
+  promoCreateSchema,
+  promoUpdateSchema,
   scheduleSetSchema,
   venueUpsertSchema,
   ymdSchema,
@@ -20,6 +22,7 @@ import { venueInclude } from '../services/venue.service';
 import { ownerFinance, ownerStats, ownerVenueView } from '../services/owner.service';
 import { bookingView } from '../services/booking.service';
 import { refundAllBookingPayments } from '../services/payment.service';
+import { generatePromoCode, promoView } from '../services/promo.service';
 import { dbDate } from '../domain/slots';
 
 // fields that need admin eyes before going live on an approved venue
@@ -338,6 +341,7 @@ export async function ownerRoutes(app: FastifyInstance) {
       include: {
         court: { include: { venue: { include: { policy: true } } } },
         participants: { orderBy: { isCreator: 'desc' } },
+        promoCode: { select: { code: true } },
         user: true,
       },
       orderBy: [{ date: 'desc' }, { startHour: 'asc' }],
@@ -399,4 +403,85 @@ export async function ownerRoutes(app: FastifyInstance) {
 
   app.get('/owner/finance', ownerOnly, async (req) => ownerFinance(req.user!.id));
   app.get('/owner/stats', ownerOnly, async (req) => ownerStats(req.user!.id));
+
+  // promo codes for my venues, fixed sum or percent off
+
+  // codes must cover only venues the caller actually owns
+  async function assertMyVenueIds(req: FastifyRequest, venueIds: string[]) {
+    if (venueIds.length === 0) return;
+    const mine = await prisma.venue.count({
+      where: { id: { in: venueIds }, ownerId: req.user!.id },
+    });
+    if (mine !== venueIds.length) throw errors.validation({ venueIds: 'unknown venue' });
+  }
+
+  app.get('/owner/promos', ownerOnly, async (req) => {
+    const promos = await prisma.promoCode.findMany({
+      where: { ownerId: req.user!.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { items: await Promise.all(promos.map(promoView)) };
+  });
+
+  app.post('/owner/promos', ownerOnly, async (req) => {
+    const body = parse(promoCreateSchema, req.body);
+    await assertMyVenueIds(req, body.venueIds);
+    const code = body.code ?? generatePromoCode();
+    const exists = await prisma.promoCode.findUnique({ where: { code } });
+    if (exists) throw errors.validation({ code: 'code already exists' });
+    const promo = await prisma.promoCode.create({
+      data: {
+        ownerId: req.user!.id,
+        code,
+        percentOff: body.percentOff ?? null,
+        amountOffTiyin: body.amountOffTiyin ?? null,
+        venueIds: body.venueIds,
+        active: body.active,
+        maxUses: body.maxUses ?? null,
+        endsAt: body.endsAt ? new Date(body.endsAt) : null,
+      },
+    });
+    return promoView(promo);
+  });
+
+  app.patch('/owner/promos/:id', ownerOnly, async (req) => {
+    const { id } = req.params as { id: string };
+    const found = await prisma.promoCode.findUnique({ where: { id } });
+    if (!found || found.ownerId !== req.user!.id) throw errors.notFound('promo');
+    const body = parse(promoUpdateSchema, req.body);
+    if (body.venueIds) await assertMyVenueIds(req, body.venueIds);
+    // a code always keeps exactly one discount kind
+    const percentOff = body.percentOff !== undefined ? body.percentOff : found.percentOff;
+    const amountOffTiyin =
+      body.amountOffTiyin !== undefined ? body.amountOffTiyin : found.amountOffTiyin;
+    if (Boolean(percentOff) === Boolean(amountOffTiyin)) {
+      throw errors.validation({ percentOff: 'set either percentOff or amountOffTiyin' });
+    }
+    const promo = await prisma.promoCode.update({
+      where: { id },
+      data: {
+        percentOff,
+        amountOffTiyin,
+        venueIds: body.venueIds ?? undefined,
+        active: body.active ?? undefined,
+        maxUses: body.maxUses !== undefined ? body.maxUses : undefined,
+        endsAt: body.endsAt !== undefined ? (body.endsAt ? new Date(body.endsAt) : null) : undefined,
+      },
+    });
+    return promoView(promo);
+  });
+
+  app.delete('/owner/promos/:id', ownerOnly, async (req) => {
+    const { id } = req.params as { id: string };
+    const found = await prisma.promoCode.findUnique({ where: { id } });
+    if (!found || found.ownerId !== req.user!.id) throw errors.notFound('promo');
+    const used = await prisma.booking.count({ where: { promoCodeId: id } });
+    if (used > 0) {
+      // bookings reference it, keep the row but stop accepting the code
+      await prisma.promoCode.update({ where: { id }, data: { active: false } });
+    } else {
+      await prisma.promoCode.delete({ where: { id } });
+    }
+    return { ok: true };
+  });
 }

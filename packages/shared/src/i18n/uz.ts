@@ -394,6 +394,77 @@ export const uz = {
   'error.NETWORK': "Tarmoq xatosi, qayta urinib ko'ring",
   'error.UNKNOWN': "Nimadir xato ketdi",
 
+  // promo codes
+  'book.promoTitle': 'Promokod',
+  'book.promoPlaceholder': 'Promokodni kiriting',
+  'book.promoApply': "Qo'llash",
+  'book.promoDiscount': 'Chegirma',
+  'book.promoApplied': 'Promokod qoʻllandi: {sum} chegirma',
+  'error.PROMO_INVALID': 'Bunday promokod topilmadi',
+  'error.PROMO_EXPIRED': 'Promokod muddati tugagan',
+  'error.PROMO_EXHAUSTED': 'Promokod limiti tugagan',
+  'error.PHONE_TAKEN': "Bu raqam boshqa akkauntga bog'langan",
+  'error.RATE_LIMITED': "Juda ko'p so'rov, birozdan keyin urinib ko'ring",
+
+  // catalog pagination
+  'catalog.loadMore': 'Yana koʻrsatish',
+  'catalog.shownOf': '{shown} / {total}',
+
+  // owner promos
+  'owner.promos': 'Promokodlar',
+  'owner.promoAdd': "Promokod qo'shish",
+  'owner.promoCode': 'Kod',
+  'owner.promoCodeHint': "Bo'sh qoldirsangiz avtomatik yaratiladi",
+  'owner.promoPercent': 'Chegirma (%)',
+  'owner.promoAmount': 'Chegirma (UZS)',
+  'owner.promoKindHint': 'Faqat bittasini kiriting: % yoki summa',
+  'owner.promoVenues': 'Qaysi maydonlar uchun',
+  'owner.promoAllVenues': 'Barcha maydonlarim',
+  'owner.promoMaxUses': 'Necha marta ishlatilsin (ixtiyoriy)',
+  'owner.promoUses': 'Ishlatilgan: {used}',
+  'owner.promoEnds': 'Amal qilish muddati (YYYY-MM-DD, ixtiyoriy)',
+  'owner.promoActive': 'Faol',
+  'owner.promoEmpty': "Hozircha promokodlar yo'q",
+
+  // owner telegram alerts
+  'owner.alerts': 'Bron xabarnomalari',
+  'owner.alertsText':
+    "Yangi bronlar haqida xabarlar emailga keladi. Telegramda ham olish uchun botga o'ting, /start bosing va hisobingiz emailini yuboring - emailga kelgan kodni botga kiritasiz.",
+  'owner.alertsOpenBot': 'Telegram botni ochish',
+
+  // partner page
+  'partner.title': "Hamkor bo'lish",
+  'partner.subtitle':
+    "Maydoningizni rentqil'ga joylashtiring: onlayn bron, oldindan to'lov va jamoaviy to'lovlar. Arizani qoldiring - bog'lanamiz.",
+  'partner.name': 'Ismingiz yoki tashkilot nomi',
+  'partner.contact': 'Email yoki Telegram',
+  'partner.contactHint': 'siz@example.com yoki @username',
+  'partner.inn': 'STIR / INN (yuridik shaxs, ixtiyoriy)',
+  'partner.message': 'Maydonlaringiz haqida qisqacha',
+  'partner.submit': 'Ariza yuborish',
+  'partner.sent': 'Ariza qabul qilindi',
+  'partner.sentText': "Tez orada siz bilan bog'lanamiz.",
+  'partner.contactRequired': 'Email yoki telegram kiriting',
+
+  // booking help
+  'bookings.help': 'Yordam / shikoyat',
+
+  // footer and legal pages
+  'footer.privacy': 'Maxfiylik siyosati',
+  'footer.terms': 'Foydalanish shartlari',
+  'footer.offer': 'Ommaviy oferta',
+  'footer.partner': "Hamkor bo'lish",
+  'footer.contacts': 'Aloqa',
+  'footer.rights': 'Barcha huquqlar himoyalangan',
+
+  // admin extras
+  'admin.venues': 'Maydonlar',
+  'admin.venueSearch': 'Nomi, manzili yoki egasi emaili...',
+  'admin.partnerRequests': 'Hamkorlik arizalari',
+  'admin.partnerEmpty': "Arizalar yo'q",
+  'admin.adminEditNote': "Admin tahriri moderatsiyasiz darhol kuchga kiradi",
+  'notif.owner_new_booking': '{venue}: yangi bron',
+
   // weekdays, short, index = Date.getDay()
   'day.0': 'Ya',
   'day.1': 'Du',

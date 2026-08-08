@@ -21,9 +21,11 @@ interface Props {
   // wizard mode: collect the payload instead of posting it
   onDraft?: (body: Record<string, unknown>) => void;
   draftLabel?: string;
+  // admins edit through their own endpoint, bypassing moderation
+  patchPath?: string;
 }
 
-export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
+export function VenueForm({ initial, onSaved, onDraft, draftLabel, patchPath }: Props) {
   const { t, locale } = useI18n();
   const { sports } = useSports();
 
@@ -95,7 +97,7 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
     setBusy(true);
     try {
       const venue = initial
-        ? await api<OwnerVenueView>(`/owner/venues/${initial.id}`, { method: 'PATCH', body })
+        ? await api<OwnerVenueView>(patchPath ?? `/owner/venues/${initial.id}`, { method: 'PATCH', body })
         : await api<OwnerVenueView>('/owner/venues', { method: 'POST', body });
       onSaved?.(venue);
     } catch (e) {
@@ -134,7 +136,7 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
   return (
     <View style={{ gap: tokens.spacing.lg }}>
       {error ? <ErrorBox message={error} /> : null}
-      <Input label={t('owner.venueName')} value={name} onChangeText={setName} />
+      <Input label={`${t('owner.venueName')} *`} value={name} onChangeText={setName} />
       {!initial ? (
         <View style={{ gap: tokens.spacing.md }}>
           <Select
@@ -190,18 +192,18 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
       />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.md }}>
         <Select
-          label={t('owner.venueRegion')}
+          label={`${t('owner.venueRegion')} *`}
           value={region as string}
           onChange={(v) => setRegion(v as Region)}
           options={REGIONS.map((r) => ({ value: r as string, label: t(`region.${r}`) }))}
           style={{ minWidth: 200, flex: 1 }}
         />
         <View style={{ minWidth: 200, flex: 1 }}>
-          <Input label={t('owner.venueDistrict')} value={district} onChangeText={setDistrict} />
+          <Input label={`${t('owner.venueDistrict')} *`} value={district} onChangeText={setDistrict} />
         </View>
       </View>
       <AddressInput
-        label={t('owner.venueAddress')}
+        label={`${t('owner.venueAddress')} *`}
         value={address}
         onChangeText={setAddress}
         regionLabel={t(`region.${region}`)}

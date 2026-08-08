@@ -80,14 +80,21 @@ export interface DayAvailabilityView {
   slots: SlotView[];
 }
 
-// the full price is paid online plus a non refundable service fee
+// the full price is paid online plus a non refundable service fee.
+// totalTiyin is the price before the promo, netTiyin after it
 export interface BookingQuoteView {
   totalTiyin: number;
+  discountTiyin: number;
+  netTiyin: number;
   serviceFeeTiyin: number;
   payNowTiyin: number;
 }
 
+export type PromoErrorCode = 'PROMO_INVALID' | 'PROMO_EXPIRED' | 'PROMO_EXHAUSTED';
+
 export interface BookingQuoteResponse extends BookingQuoteView {
+  // set when a promo code was passed but rejected, the quote itself stays valid
+  promoError: PromoErrorCode | null;
   venueName: string;
   courtName: string;
   sport: Sport;
@@ -125,6 +132,8 @@ export interface BookingView {
   endHour: number;
   totalTiyin: number;
   serviceFeeTiyin: number;
+  discountTiyin: number;
+  promoCode: string | null;
   payNowTiyin: number;
   contactPhone: string;
   playersCount: number;
@@ -173,6 +182,8 @@ export interface PlatformConfigView {
   serviceFeePercent: number;
   // tells the login screen whether to show the google button
   googleAuthEnabled: boolean;
+  // alert bot username without @, null hides the telegram block
+  telegramBotUsername: string | null;
   bookingTtlMinutes: number;
   splitTtlMinutes: number;
   calendarDays: number;
@@ -223,6 +234,30 @@ export interface OwnerVenueView extends VenueDetailView {
 export interface OwnerBookingView extends BookingView {
   creatorName: string | null;
   creatorEmail: string | null;
+}
+
+export interface PromoCodeView {
+  id: string;
+  code: string;
+  percentOff: number | null;
+  amountOffTiyin: number | null;
+  venueIds: string[];
+  active: boolean;
+  maxUses: number | null;
+  usedCount: number;
+  endsAt: string | null;
+  createdAt: string;
+}
+
+export interface PartnerRequestView {
+  id: string;
+  name: string;
+  contact: string;
+  inn: string | null;
+  message: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  adminComment: string | null;
+  createdAt: string;
 }
 
 export interface OwnerFinanceView {

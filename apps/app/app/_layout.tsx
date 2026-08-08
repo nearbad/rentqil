@@ -15,7 +15,8 @@ export default function RootLayout() {
 
     const font = document.createElement('link');
     font.rel = 'stylesheet';
-    font.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
+    font.href =
+      'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@600;700;800&display=swap';
     document.head.appendChild(font);
 
     const icon = document.createElement('link');

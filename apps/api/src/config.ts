@@ -44,4 +44,11 @@ export const config = {
     email: process.env.ESKIZ_EMAIL ?? '',
     password: process.env.ESKIZ_PASSWORD ?? '',
   },
+  // owner booking alerts bot, empty token disables the whole feature
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN ?? '',
+    webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET ?? '',
+    // public bot username without @, the owner cabinet links to it
+    botUsername: process.env.TELEGRAM_BOT_USERNAME ?? '',
+  },
 };

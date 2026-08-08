@@ -64,6 +64,9 @@ export const catalogQuerySchema = z.object({
   sort: z.enum(['default', 'price', 'distance']).optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
+  // "load more" pagination, applied after filtering
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
 });
 
 export const availabilityQuerySchema = z.object({
@@ -77,6 +80,7 @@ export const quoteQuerySchema = z
     date: ymdSchema,
     start: z.coerce.number().int().min(0).max(23),
     end: z.coerce.number().int().min(1).max(24),
+    promo: z.string().trim().max(30).optional(),
   })
   .refine((q) => q.end > q.start, { message: 'end must be after start' });
 
@@ -97,6 +101,7 @@ export const createBookingSchema = z
         names: z.array(z.string().trim().min(2).max(80)).min(2).max(30),
       })
       .optional(),
+    promoCode: z.string().trim().max(30).optional(),
   })
   .refine((b) => b.endHour > b.startHour, { message: 'endHour must be after startHour' });
 
@@ -163,6 +168,44 @@ export const venueUpsertSchema = z.object({
   requireNames: z.boolean().default(false),
   requireDocuments: z.boolean().default(false),
   terms: z.string().trim().max(2000).default(''),
+});
+
+// promo codes, exactly one discount kind per code
+const promoBaseSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9_-]{3,24}$/)
+    .optional(),
+  percentOff: z.number().int().min(1).max(100).nullable().optional(),
+  amountOffTiyin: z.number().int().positive().nullable().optional(),
+  // empty list means every venue of the owner
+  venueIds: z.array(z.string().min(1)).max(50).default([]),
+  active: z.boolean().default(true),
+  maxUses: z.number().int().positive().nullable().optional(),
+  endsAt: z.string().datetime({ offset: true }).nullable().optional(),
+});
+
+export const promoCreateSchema = promoBaseSchema.refine(
+  (p) => Boolean(p.percentOff) !== Boolean(p.amountOffTiyin),
+  { message: 'set either percentOff or amountOffTiyin' }
+);
+
+export const promoUpdateSchema = promoBaseSchema.omit({ code: true }).partial();
+
+// public "become a partner" form, works without an account
+export const partnerApplySchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  // email or telegram handle, one field for both
+  contact: z.string().trim().min(3).max(120),
+  inn: z
+    .string()
+    .trim()
+    .regex(/^\d{9,14}$/)
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  message: z.string().trim().max(1000).optional(),
 });
 
 export const policySchema = z.object({

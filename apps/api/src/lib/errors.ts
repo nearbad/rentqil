@@ -28,6 +28,11 @@ export const errors = {
   splitState: () => new AppError('SPLIT_STATE', 409),
   userBlocked: () => new AppError('USER_BLOCKED', 403),
   emailTaken: () => new AppError('EMAIL_TAKEN', 409),
+  phoneTaken: () => new AppError('PHONE_TAKEN', 409),
   passwordInvalid: () => new AppError('PASSWORD_INVALID', 401),
   venueNotActive: () => new AppError('VENUE_NOT_ACTIVE', 400),
+  promoInvalid: () => new AppError('PROMO_INVALID', 400),
+  promoExpired: () => new AppError('PROMO_EXPIRED', 400),
+  promoExhausted: () => new AppError('PROMO_EXHAUSTED', 400),
+  rateLimited: () => new AppError('RATE_LIMITED', 429),
 };

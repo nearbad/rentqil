@@ -33,6 +33,9 @@ export default function BookScreen() {
   const [names, setNames] = useState<string[]>(['', '']);
   const [provider, setProvider] = useState<PaymentProviderId>('click');
   const [busy, setBusy] = useState(false);
+  const [promoInput, setPromoInput] = useState('');
+  // the code actually sent to the server, set by the apply button
+  const [promo, setPromo] = useState('');
 
   useEffect(() => {
     if (me?.phone) setPhone(me.phone);
@@ -40,14 +43,15 @@ export default function BookScreen() {
 
   useEffect(() => {
     if (!params.courtId || !params.date) return;
+    const promoParam = promo ? `&promo=${encodeURIComponent(promo)}` : '';
     api<BookingQuoteResponse>(
-      `/bookings/quote?courtId=${params.courtId}&date=${params.date}&start=${params.start}&end=${params.end}`
+      `/bookings/quote?courtId=${params.courtId}&date=${params.date}&start=${params.start}&end=${params.end}${promoParam}`
     )
       .then(setQuote)
       .catch((e) =>
         setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'))
       );
-  }, [params.courtId, params.date, params.start, params.end, t]);
+  }, [params.courtId, params.date, params.start, params.end, promo, t]);
 
   // documents policy or a split means every player is named
   const namesNeeded = split || (quote?.requireDocuments ?? false);
@@ -100,6 +104,7 @@ export default function BookScreen() {
           playersCount: players,
           playerNames: namesNeeded && !split ? cleanNames : [],
           ...(split ? { split: { names: cleanNames } } : {}),
+          ...(promo && quote.discountTiyin > 0 ? { promoCode: promo } : {}),
         },
       });
       const myShare = split ? booking.participants.find((p) => p.isCreator) : undefined;
@@ -144,6 +149,12 @@ export default function BookScreen() {
 
         <Card style={{ gap: tokens.spacing.sm }}>
           <KeyValue label={t('book.total')} value={money(quote.totalTiyin, locale)} />
+          {quote.discountTiyin > 0 ? (
+            <KeyValue
+              label={`${t('book.promoDiscount')} (${promo.toUpperCase()})`}
+              value={`-${money(quote.discountTiyin, locale)}`}
+            />
+          ) : null}
           {quote.serviceFeeTiyin > 0 ? (
             <KeyValue label={t('book.serviceFee')} value={money(quote.serviceFeeTiyin, locale)} />
           ) : null}
@@ -154,8 +165,41 @@ export default function BookScreen() {
           </AppText>
         </Card>
 
+        <Card style={{ gap: tokens.spacing.sm }}>
+          <AppText variant="small" color={tokens.colors.gray500}>
+            {t('book.promoTitle')}
+          </AppText>
+          <View style={{ flexDirection: 'row', gap: tokens.spacing.sm, alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
+              <Input
+                value={promoInput}
+                onChangeText={setPromoInput}
+                placeholder={t('book.promoPlaceholder')}
+                autoCapitalize="characters"
+              />
+            </View>
+            <Button
+              title={t('book.promoApply')}
+              variant="secondary"
+              small
+              onPress={() => setPromo(promoInput.trim())}
+              disabled={!promoInput.trim() || promoInput.trim() === promo}
+            />
+          </View>
+          {quote.promoError ? (
+            <AppText variant="tiny" color={tokens.colors.danger}>
+              {t(`error.${quote.promoError}` as never)}
+            </AppText>
+          ) : null}
+          {quote.discountTiyin > 0 ? (
+            <AppText variant="tiny" color={tokens.colors.success}>
+              {t('book.promoApplied', { sum: money(quote.discountTiyin, locale) })}
+            </AppText>
+          ) : null}
+        </Card>
+
         <Input
-          label={t('book.contactPhone')}
+          label={`${t('book.contactPhone')} *`}
           value={phone}
           onChangeText={setPhone}
           placeholder={t('auth.phoneHint')}
@@ -180,7 +224,7 @@ export default function BookScreen() {
           {namesNeeded ? (
             <>
               <AppText variant="small" color={tokens.colors.gray500}>
-                {t('book.splitNames')}
+                {t('book.splitNames')} *
               </AppText>
               {names.map((name, i) => (
                 <Input

@@ -93,3 +93,27 @@ The creator types the full name of every player, shares are generated per name. 
 ## 22. Brutalist black and white
 
 The owner asked for brutalism, which replaced the earlier soft minimalism: zero border radius, 2px black borders, hard 4px offset shadows on cards, buttons and dropdown panels, uppercase button labels, 800 weight headings. Still strictly black on white with the same muted green and red accents.
+
+## 23. Promo codes discount the price, not the fee base logic
+
+Owners create codes scoped to their venues (empty scope = all their venues), either a percent or a fixed sum off. The discount applies to the court price only; the service fee percent is then computed on the discounted price. Booking.totalTiyin stores the discounted price so refunds, finance and payouts keep working untouched, with discountTiyin kept alongside for display. Percent discounts round to whole soms. Usage counting is derived from bookings (confirmed, completed, or live pending) instead of a stored counter, so expired holds free their use automatically.
+
+## 24. Split shares are whole soms, the creator absorbs rounding
+
+splitEven gives every non-creator a share rounded to whole soms and hands the creator the exact remainder, slightly more or less: 100 000 for three is 33 334 + 33 333 + 33 333. Friends see round numbers, the sum always matches to the tiyin.
+
+## 25. Telegram alerts ride on the existing notifier
+
+Owner booking alerts go through the single InAppNotifier: in-app row always, email when a template exists, telegram when the user linked a chat. Linking happens inside the bot with email as proof: the bot takes the account email, the api mails a 6 digit code, the code typed back into the chat binds chat id to user. The bot is raw Bot API over fetch (two endpoints), no sdk; empty TELEGRAM_BOT_TOKEN disables everything.
+
+## 26. Partner requests are a public lead table
+
+"Become a partner" moved to a public /partner page that anyone can submit: name, one contact field (email or telegram), optional INN, message. It lands in PartnerRequest for the admin. A logged in submitter additionally files the classic OwnerApplication so the admin can grant the owner role from the same queue as before.
+
+## 27. Rate limiting is a 40 line in-memory plugin
+
+One api instance means no redis: a sliding window map keyed by ip (fastify trustProxy reads x-forwarded-for behind caddy), 300 req/min globally, with per route overrides on auth and the partner form via route config. Fastify's own 4xx errors (empty json body, payload too large, rate limit) now map to their real status codes instead of a blanket 500.
+
+## 28. Admin edits are final, moderation is for owners
+
+/admin/venues lists and edits any venue through the same VenueForm the owner uses, but the patch endpoint applies changes immediately, clears pendingChanges and can flip status directly. Courts, schedules and prices were already reachable for admins through the owner endpoints.

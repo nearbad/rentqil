@@ -19,6 +19,8 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
+    # pnpm does not reap child processes, init does
+    init: true
     depends_on:
       db:
         condition: service_healthy
@@ -44,6 +46,9 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-rentqil <no-reply@rentqil.com>}
       ESKIZ_EMAIL: ${ESKIZ_EMAIL:-}
       ESKIZ_PASSWORD: ${ESKIZ_PASSWORD:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
     expose:
       - '3001'
     volumes:
@@ -60,6 +65,7 @@ services:
         EXPO_PUBLIC_YANDEX_MAPS_KEY: ${EXPO_PUBLIC_YANDEX_MAPS_KEY:-}
         EXPO_PUBLIC_YANDEX_SUGGEST_KEY: ${EXPO_PUBLIC_YANDEX_SUGGEST_KEY:-}
     restart: unless-stopped
+    init: true
     depends_on:
       - api
     expose:

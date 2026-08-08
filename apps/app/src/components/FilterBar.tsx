@@ -1,11 +1,11 @@
 import React from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { X } from 'lucide-react-native';
 import { REGIONS, tokens, type Region } from '@rentqil/shared';
 import { useI18n } from '@/lib/i18n';
 import { useSports } from '@/lib/sports';
 import { addDaysYmd, todayYmd } from '@/lib/format';
 import { AppText } from '@/ui/AppText';
-import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/bits';
 import { Select } from '@/ui/Select';
 import { PriceSlider } from '@/ui/RangeSlider';
@@ -52,7 +52,7 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
 
   const dateOptions = [
     { value: null, label: t('common.all') },
-    ...Array.from({ length: 7 }, (_, i) => {
+    ...Array.from({ length: 30 }, (_, i) => {
       const date = addDaysYmd(todayYmd(), i);
       return { value: date, label: i === 0 ? t('common.today') : date.slice(5).split('-').reverse().join('.') };
     }),
@@ -176,9 +176,28 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
           ]}
           style={{ minWidth: 130 }}
         />
-        {active ? (
-          <Button title={t('catalog.reset')} variant="ghost" small onPress={() => onChange({ sort: 'default' })} />
-        ) : null}
+        {/* fixed slot so the other controls never shift when the reset appears */}
+        <View style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
+          {active ? (
+            <Pressable
+              onPress={() => onChange({ sort: 'default' })}
+              accessibilityLabel={t('catalog.reset')}
+              hitSlop={8}
+              style={({ pressed }) => ({
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                borderWidth: 1,
+                borderColor: tokens.colors.gray300,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: pressed ? tokens.colors.gray150 : tokens.colors.white,
+              })}
+            >
+              <X size={16} color={tokens.colors.gray700} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </View>
   );

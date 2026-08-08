@@ -3,6 +3,7 @@ import type { OwnerApplication, User } from '../lib/db';
 import type { MeView, NotificationView } from '@rentqil/shared';
 import { updateMeSchema } from '@rentqil/shared';
 import { prisma } from '../lib/db';
+import { errors } from '../lib/errors';
 import { parse } from '../lib/validate';
 
 export function meView(user: User, application: OwnerApplication | null): MeView {
@@ -27,12 +28,22 @@ export async function meRoutes(app: FastifyInstance) {
 
   app.patch('/me', { preHandler: app.requireUser }, async (req) => {
     const data = parse(updateMeSchema, req.body);
-    const user = await prisma.user.update({
-      where: { id: req.user!.id },
-      data,
-      include: { ownerApplication: true },
-    });
-    return meView(user, user.ownerApplication);
+    try {
+      const user = await prisma.user.update({
+        where: { id: req.user!.id },
+        data,
+        include: { ownerApplication: true },
+      });
+      return meView(user, user.ownerApplication);
+    } catch (err) {
+      const fields = (err as { meta?: { constraint?: { fields?: string[] } } })?.meta;
+      const isUnique = (err as { code?: string })?.code === 'P2002';
+      if (isUnique) {
+        const onPhone = JSON.stringify(fields ?? {}).includes('phone');
+        throw onPhone ? errors.phoneTaken() : errors.emailTaken();
+      }
+      throw err;
+    }
   });
 
   app.get('/me/notifications', { preHandler: app.requireUser }, async (req) => {
