@@ -9,6 +9,7 @@ import { useSports } from '@/lib/sports';
 import { money } from '@/lib/format';
 import { AppText } from '@/ui/AppText';
 import { hardShadow } from '@/ui/shadow';
+import { animProps } from '@/ui/anim';
 import { Chip } from '@/ui/bits';
 import { PolicyBadgeView } from './PolicyBadgeView';
 import { SportIcon } from './SportIcon';
@@ -22,12 +23,18 @@ export function VenueCard({ venue }: { venue: VenueCardView }) {
   return (
     <Pressable
       onPress={() => router.push(`/venue/${venue.id}`)}
+      {...animProps}
       style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => ({
         borderWidth: tokens.border,
         borderColor: tokens.colors.text,
         overflow: 'hidden',
         backgroundColor: tokens.colors.white,
-        ...(pressed ? { transform: [{ translateX: 2 }, { translateY: 2 }] } : hardShadow(hovered ? 'md' : 'sm')),
+        height: '100%',
+        ...(pressed
+          ? { transform: [{ translateX: 2 }, { translateY: 2 }] }
+          : hovered
+            ? { transform: [{ translateX: -2 }, { translateY: -2 }], ...hardShadow('md') }
+            : hardShadow('sm')),
       })}
     >
       {photo ? (
@@ -36,7 +43,7 @@ export function VenueCard({ venue }: { venue: VenueCardView }) {
         <View
           style={{
             width: '100%',
-            height: 140,
+            height: 180,
             backgroundColor: tokens.colors.gray50,
             alignItems: 'center',
             justifyContent: 'center',
@@ -45,7 +52,7 @@ export function VenueCard({ venue }: { venue: VenueCardView }) {
           <SportIcon icon={sportIcon(venue.sports[0] ?? '')} size={40} color={tokens.colors.gray300} strokeWidth={1.2} />
         </View>
       )}
-      <View style={{ padding: tokens.spacing.lg, gap: tokens.spacing.sm }}>
+      <View style={{ padding: tokens.spacing.lg, gap: tokens.spacing.sm, flex: 1 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: tokens.spacing.sm }}>
           <AppText variant="h3" style={{ flex: 1 }} numberOfLines={1}>
             {venue.name}

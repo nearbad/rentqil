@@ -4,6 +4,7 @@ import type { OwnerVenueView, Region } from '@rentqil/shared';
 import { AMENITIES, REGIONS, tokens, type Amenity } from '@rentqil/shared';
 import { api, ApiError } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
+import { useSports } from '@/lib/sports';
 import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
@@ -18,9 +19,12 @@ interface Props {
 }
 
 export function VenueForm({ initial, onSaved }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const { sports } = useSports();
 
   const [name, setName] = useState(initial?.name ?? '');
+  const [sport, setSport] = useState('');
+  const [indoor, setIndoor] = useState(false);
   const [description, setDescription] = useState(initial?.description ?? '');
   const [address, setAddress] = useState(initial?.address ?? '');
   const [region, setRegion] = useState<Region>(initial?.region ?? 'tashkent_city');
@@ -58,6 +62,8 @@ export function VenueForm({ initial, onSaved }: Props) {
         requireNames,
         requireDocuments,
         terms: terms.trim(),
+        // a brand new venue is one bookable field, sport spawns its court
+        ...(initial ? {} : { sport: sport || (sports[0]?.code ?? ''), indoor }),
       };
       const venue = initial
         ? await api<OwnerVenueView>(`/owner/venues/${initial.id}`, { method: 'PATCH', body })
@@ -74,6 +80,18 @@ export function VenueForm({ initial, onSaved }: Props) {
     <View style={{ gap: tokens.spacing.lg }}>
       {error ? <ErrorBox message={error} /> : null}
       <Input label={t('owner.venueName')} value={name} onChangeText={setName} />
+      {!initial ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.md, alignItems: 'flex-end' }}>
+          <Select
+            label={t('owner.courtSport')}
+            value={sport || (sports[0]?.code ?? '')}
+            onChange={(v) => setSport(v as string)}
+            options={sports.map((s) => ({ value: s.code as string, label: s.names[locale] }))}
+            style={{ minWidth: 200, flex: 1 }}
+          />
+          <Toggle label={t('owner.courtIndoor')} value={indoor} onChange={setIndoor} />
+        </View>
+      ) : null}
       <Input
         label={t('owner.venueDescription')}
         value={description}

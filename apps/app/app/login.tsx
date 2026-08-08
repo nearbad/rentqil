@@ -12,14 +12,18 @@ import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
 import { Divider, ErrorBox } from '@/ui/bits';
 
+type Mode = 'password' | 'code';
+
 export default function LoginScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const { setSession, loginWithToken } = useAuth();
   const params = useLocalSearchParams<{ next?: string; token?: string; error?: string }>();
 
+  const [mode, setMode] = useState<Mode>('password');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,6 +39,9 @@ export default function LoginScreen() {
       router.replace('/');
     }
   };
+
+  const fail = (e: unknown) =>
+    setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
 
   // the google callback lands here with ?token=
   useEffect(() => {
@@ -58,39 +65,57 @@ export default function LoginScreen() {
   const cleanEmail = email.trim().toLowerCase();
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
 
-  const requestCode = async () => {
+  const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     setError(null);
     try {
+      await fn();
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const passwordLogin = () =>
+    run(async () => {
+      const res = await api<{ token: string; me: MeView }>('/auth/password/login', {
+        method: 'POST',
+        body: { email: cleanEmail, password },
+      });
+      await setSession(res.token, res.me);
+      done();
+    });
+
+  const register = () =>
+    run(async () => {
+      const res = await api<{ token: string; me: MeView }>('/auth/register', {
+        method: 'POST',
+        body: { email: cleanEmail, password },
+      });
+      await setSession(res.token, res.me);
+      done();
+    });
+
+  const requestCode = () =>
+    run(async () => {
       const res = await api<{ ok: boolean; devCode?: string }>('/auth/otp/request', {
         method: 'POST',
         body: { email: cleanEmail },
       });
       setDevCode(res.devCode ?? null);
       setStep('code');
-    } catch (e) {
-      setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
-    } finally {
-      setBusy(false);
-    }
-  };
+    });
 
-  const verify = async () => {
-    setBusy(true);
-    setError(null);
-    try {
+  const verify = () =>
+    run(async () => {
       const res = await api<{ token: string; me: MeView }>('/auth/otp/verify', {
         method: 'POST',
         body: { email: cleanEmail, code: code.trim() },
       });
       await setSession(res.token, res.me);
       done();
-    } catch (e) {
-      setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
-    } finally {
-      setBusy(false);
-    }
-  };
+    });
 
   const googleLogin = () => {
     // full page redirect, the api sends us back with ?token=
@@ -101,28 +126,48 @@ export default function LoginScreen() {
 
   return (
     <Screen title={t('auth.title')} back>
-      <View style={{ gap: tokens.spacing.lg, paddingTop: tokens.spacing.xl }}>
+      <View style={{ gap: tokens.spacing.lg, paddingTop: tokens.spacing.xl, maxWidth: 440, width: '100%', alignSelf: 'center' }}>
         {error ? <ErrorBox message={error} /> : null}
 
-        {step === 'email' ? (
+        <Input
+          label={t('auth.email')}
+          value={email}
+          onChangeText={setEmail}
+          placeholder={t('auth.emailHint')}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          autoFocus
+        />
+
+        {mode === 'password' ? (
           <>
             <Input
-              label={t('auth.email')}
-              value={email}
-              onChangeText={setEmail}
-              placeholder={t('auth.emailHint')}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoFocus
+              label={t('auth.password')}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="password"
             />
+            <Button
+              title={t('auth.loginAction')}
+              onPress={passwordLogin}
+              loading={busy}
+              disabled={!emailValid || password.length < 6}
+            />
+            <Button
+              title={t('auth.register')}
+              variant="secondary"
+              onPress={register}
+              loading={busy}
+              disabled={!emailValid || password.length < 6}
+            />
+            <Button title={t('auth.byCode')} variant="ghost" small onPress={() => setMode('code')} />
+          </>
+        ) : step === 'email' ? (
+          <>
             <Button title={t('auth.sendCode')} onPress={requestCode} loading={busy} disabled={!emailValid} />
-            {googleEnabled ? (
-              <>
-                <Divider />
-                <Button title={t('auth.google')} variant="secondary" onPress={googleLogin} />
-              </>
-            ) : null}
+            <Button title={t('auth.byPassword')} variant="ghost" small onPress={() => setMode('password')} />
           </>
         ) : (
           <>
@@ -144,8 +189,24 @@ export default function LoginScreen() {
             />
             <Button title={t('auth.verify')} onPress={verify} loading={busy} disabled={code.length !== 6} />
             <Button title={t('auth.resend')} onPress={requestCode} variant="ghost" disabled={busy} />
+            <Button
+              title={t('auth.byPassword')}
+              variant="ghost"
+              small
+              onPress={() => {
+                setMode('password');
+                setStep('email');
+              }}
+            />
           </>
         )}
+
+        {googleEnabled ? (
+          <>
+            <Divider />
+            <Button title={t('auth.google')} variant="secondary" onPress={googleLogin} />
+          </>
+        ) : null}
       </View>
     </Screen>
   );

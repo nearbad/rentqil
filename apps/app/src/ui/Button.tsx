@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, type ViewStyle } from 'react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
 import { hardShadow } from './shadow';
+import { animProps } from './anim';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -35,6 +36,7 @@ export function Button({
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
+      {...animProps}
       style={({ pressed }) => [
         {
           backgroundColor: background,

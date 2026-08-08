@@ -27,5 +27,7 @@ export const errors = {
   paymentState: () => new AppError('PAYMENT_STATE', 409),
   splitState: () => new AppError('SPLIT_STATE', 409),
   userBlocked: () => new AppError('USER_BLOCKED', 403),
+  emailTaken: () => new AppError('EMAIL_TAKEN', 409),
+  passwordInvalid: () => new AppError('PASSWORD_INVALID', 401),
   venueNotActive: () => new AppError('VENUE_NOT_ACTIVE', 400),
 };

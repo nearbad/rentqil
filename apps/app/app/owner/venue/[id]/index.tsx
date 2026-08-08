@@ -13,7 +13,6 @@ import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
 import { Badge, Card, Divider, Loading } from '@/ui/bits';
-import { Select } from '@/ui/Select';
 import { Toggle } from '@/ui/Toggle';
 import { VenueForm } from '@/components/owner/VenueForm';
 
@@ -56,53 +55,6 @@ function PolicyEditor({ venue, onSaved }: { venue: OwnerVenueView; onSaved: () =
         </View>
       ) : null}
       <Button title={t('common.save')} onPress={save} loading={busy} variant="secondary" small />
-    </Card>
-  );
-}
-
-function AddCourtForm({ venueId, onAdded }: { venueId: string; onAdded: () => void }) {
-  const { t, locale } = useI18n();
-  const { sports } = useSports();
-  const [name, setName] = useState('');
-  const [sport, setSport] = useState<string>('');
-  const [indoor, setIndoor] = useState(false);
-  const [capacity, setCapacity] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const add = async () => {
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
-      await api(`/owner/venues/${venueId}/courts`, {
-        method: 'POST',
-        body: {
-          name: name.trim(),
-          sport: sport || (sports[0]?.code ?? ''),
-          indoor,
-          capacity: parseInt(capacity, 10) || null,
-        },
-      });
-      setName('');
-      setCapacity('');
-      onAdded();
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Card style={{ gap: tokens.spacing.md }}>
-      <AppText variant="h3">{t('owner.addCourt')}</AppText>
-      <Input label={t('owner.courtName')} value={name} onChangeText={setName} />
-      <Select
-        label={t('owner.courtSport')}
-        value={sport || (sports[0]?.code ?? '')}
-        onChange={(v) => setSport(v as string)}
-        options={sports.map((s) => ({ value: s.code as string, label: s.names[locale] }))}
-      />
-      <Input label={t('owner.courtCapacity')} value={capacity} onChangeText={setCapacity} keyboardType="number-pad" />
-      <Toggle label={t('owner.courtIndoor')} value={indoor} onChange={setIndoor} />
-      <Button title={t('common.add')} onPress={add} loading={busy} variant="secondary" small disabled={!name.trim()} />
     </Card>
   );
 }
@@ -171,7 +123,7 @@ export default function OwnerVenueScreen() {
 
         <Divider />
 
-        <AppText variant="h3">{t('owner.courts')}</AppText>
+        <AppText variant="h3">{t('owner.schedulePrices')}</AppText>
         <View style={{ gap: tokens.spacing.sm }}>
           {venue.courts.map((court) => (
             <Pressable
@@ -198,7 +150,6 @@ export default function OwnerVenueScreen() {
           ))}
         </View>
 
-        <AddCourtForm venueId={venue.id} onAdded={load} />
       </View>
     </Screen>
   );

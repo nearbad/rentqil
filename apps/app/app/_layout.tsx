@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { tokens } from '@rentqil/shared';
 import { AuthProvider } from '@/lib/auth';
 import { I18nProvider } from '@/lib/i18n';
+import { WebStyles } from '@/components/WebStyles';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -13,7 +14,7 @@ export default function RootLayout() {
     document.title = 'rentqil';
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
     document.head.appendChild(link);
     document.body.style.backgroundColor = tokens.colors.bg;
   }, []);
@@ -22,6 +23,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <I18nProvider>
         <AuthProvider>
+          <WebStyles />
           <StatusBar style="dark" />
           <Stack
             screenOptions={{

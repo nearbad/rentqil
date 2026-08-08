@@ -39,7 +39,7 @@ export const uz = {
   'nav.notifications': 'Bildirishnomalar',
 
   // auth
-  'auth.title': 'Kirish',
+  'auth.title': "Kirish / Ro'yxatdan o'tish",
   'auth.phoneHint': '+998 90 123 45 67',
   'auth.sendCode': 'Kod yuborish',
   'auth.codeSent': 'SMS kod yuborildi',
@@ -89,7 +89,7 @@ export const uz = {
   'catalog.filters': 'Filtrlar',
   'catalog.anySport': 'Barcha sport turlari',
   'catalog.anyRegion': "Butun O'zbekiston",
-  'catalog.priceUpTo': 'Narx gacha (soatiga)',
+  'catalog.priceUpTo': 'Soatlik narx',
   'catalog.indoorOnly': 'Faqat yopiq',
   'catalog.freeAt': "Bo'sh vaqti",
   'catalog.date': 'Sana',
@@ -238,7 +238,6 @@ export const uz = {
   'owner.policyFreeHours': 'Bepul bekor qilish oynasi (soat)',
   'owner.policyLatePercent': 'Kech bekor qilishda qaytariladigan %',
   'owner.courts': 'Kortlar',
-  'owner.addCourt': "Kort qo'shish",
   'owner.courtName': 'Nomi',
   'owner.courtSport': 'Sport turi',
   'owner.courtSurface': 'Qoplama',
@@ -353,6 +352,17 @@ export const uz = {
   'profile.phone': 'Telefon',
   'admin.configServiceFeePercent': "Yig'im (bron narxidan %)",
   'admin.configServiceFeeNote': "Narx ustiga qo'shiladi, hech qachon qaytarilmaydi. 0 o'chiradi.",
+
+  'auth.cta': 'Kirish',
+  'auth.password': 'Parol',
+  'auth.loginAction': 'Kirish',
+  'auth.register': "Ro'yxatdan o'tish",
+  'auth.byCode': 'Email kodi orqali kirish',
+  'auth.byPassword': 'Parol bilan kirish',
+  'auth.setPassword': 'Yangi parol',
+  'error.EMAIL_TAKEN': "Bu email allaqachon ro'yxatdan o'tgan",
+  'error.PASSWORD_INVALID': "Email yoki parol noto'g'ri",
+  'owner.schedulePrices': 'Jadval va narxlar',
 
   'error.VALIDATION_ERROR': "Ma'lumotlar noto'g'ri",
   'error.UNAUTHORIZED': 'Avval tizimga kiring',

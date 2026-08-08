@@ -15,8 +15,8 @@ interface Props {
 export function Popover({ renderTrigger, children, menuWidth = 260, align = 'left' }: Props) {
   const anchorRef = useRef<View>(null);
   const [visible, setVisible] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-  const { width: winW } = useWindowDimensions();
+  const [pos, setPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
+  const { width: winW, height: winH } = useWindowDimensions();
   const desktop = winW >= tokens.breakpointDesktop;
 
   const open = () => {
@@ -27,10 +27,16 @@ export function Popover({ renderTrigger, children, menuWidth = 260, align = 'lef
     }
     anchorRef.current?.measureInWindow((x, y, w, h) => {
       const wanted = align === 'right' ? x + w - menuWidth : x;
-      setPos({
-        top: y + h + 6,
-        left: Math.max(8, Math.min(wanted, winW - menuWidth - 8)),
-      });
+      const left = Math.max(8, Math.min(wanted, winW - menuWidth - 8));
+      const below = winH - (y + h) - 16;
+      const above = y - 16;
+      // open downward when it fits, otherwise flip above the trigger
+      if (below >= 220 || below >= above) {
+        setPos({ top: y + h + 6, left, maxHeight: Math.min(380, Math.max(below, 140)) });
+      } else {
+        const maxHeight = Math.min(380, above);
+        setPos({ top: Math.max(8, y - 6 - maxHeight), left, maxHeight });
+      }
       setVisible(true);
     });
   };
@@ -58,7 +64,7 @@ export function Popover({ renderTrigger, children, menuWidth = 260, align = 'lef
                 backgroundColor: tokens.colors.white,
                 borderWidth: tokens.border,
                 borderColor: tokens.colors.text,
-                maxHeight: 380,
+                maxHeight: pos.maxHeight,
                 overflow: 'hidden',
                 ...hardShadow('md'),
               }}

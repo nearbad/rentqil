@@ -19,6 +19,46 @@ const LOCALE_LABELS: Record<Locale, string> = {
   en: 'English',
 };
 
+function PasswordSection() {
+  const { t } = useI18n();
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [flash, setFlash] = useState(false);
+
+  const save = async () => {
+    if (password.length < 6) return;
+    setBusy(true);
+    try {
+      await api('/auth/password/set', { method: 'POST', body: { password } });
+      setPassword('');
+      setFlash(true);
+      setTimeout(() => setFlash(false), 1500);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={{ gap: tokens.spacing.sm }}>
+      <Input
+        label={t('auth.setPassword')}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoComplete="new-password"
+      />
+      <Button
+        title={flash ? t('profile.saved') : t('common.save')}
+        onPress={save}
+        loading={busy}
+        variant="secondary"
+        small
+        disabled={password.length < 6}
+      />
+    </View>
+  );
+}
+
 function NavRow({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
   return (
     <Pressable
@@ -121,6 +161,8 @@ export default function ProfileScreen() {
             small
           />
         </View>
+
+        <PasswordSection />
 
         <View style={{ gap: tokens.spacing.sm }}>
           <AppText variant="small" color={tokens.colors.gray500}>

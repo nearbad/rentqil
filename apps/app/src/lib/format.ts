@@ -1,7 +1,15 @@
-import { formatMoney, translate, type Locale, type TranslationKey } from '@rentqil/shared';
+import { formatMoney, tiyinToSom, translate, type Locale, type TranslationKey } from '@rentqil/shared';
 
 export function money(tiyin: number, locale: Locale): string {
   return formatMoney(tiyin, locale);
+}
+
+// compact price for tight table cells: 350 000 som becomes "350k"
+export function moneyShort(tiyin: number, locale: Locale): string {
+  const som = tiyinToSom(tiyin);
+  if (som >= 1_000_000) return `${(som / 1_000_000).toFixed(1).replace('.0', '')}M`;
+  if (som >= 1000) return `${Math.round(som / 1000)}k`;
+  return money(tiyin, locale);
 }
 
 // "Ju, 08.08" style short date from YYYY-MM-DD

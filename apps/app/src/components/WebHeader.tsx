@@ -8,6 +8,7 @@ import { useI18n } from '@/lib/i18n';
 import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { LanguageMenu } from './LanguageMenu';
+import { animProps } from '@/ui/anim';
 
 function NavLink({ label, path, active, onPress }: { label: string; path: string; active: boolean; onPress: (p: string) => void }) {
   return (
@@ -53,10 +54,18 @@ export function WebHeader() {
           gap: tokens.spacing.md,
         }}
       >
-        <Pressable onPress={() => go('/')} style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-          <AppText variant="h2">rent</AppText>
-          <AppText variant="h2" color={tokens.colors.gray500}>
-            qil
+        <Pressable
+          onPress={() => go('/')}
+          {...animProps}
+          style={({ hovered }: { hovered?: boolean }) => ({
+            backgroundColor: tokens.colors.text,
+            paddingVertical: 5,
+            paddingHorizontal: tokens.spacing.md,
+            ...(hovered ? { transform: [{ rotate: '-2deg' }] } : {}),
+          })}
+        >
+          <AppText variant="h3" color={tokens.colors.white} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            RENTQIL!
           </AppText>
         </Pressable>
 
@@ -111,9 +120,9 @@ export function WebHeader() {
               </Pressable>
             ) : null}
           </>
-        ) : desktop ? (
-          <Button title={t('auth.title')} small variant="secondary" onPress={() => go('/login')} />
-        ) : null}
+        ) : (
+          <Button title={t('auth.cta')} small variant="secondary" onPress={() => go('/login')} />
+        )}
       </View>
     </View>
   );

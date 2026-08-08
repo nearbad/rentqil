@@ -38,7 +38,7 @@ export function MyBookingsScreen() {
 
   if (!me) {
     return (
-      <Screen title={t('bookings.title')}>
+      <Screen>
         <View style={{ gap: tokens.spacing.lg, paddingTop: tokens.spacing.xl }}>
           <AppText color={tokens.colors.gray500}>{t('auth.loginRequired')}</AppText>
           <Button title={t('auth.title')} onPress={() => router.push('/login')} />
@@ -50,8 +50,8 @@ export function MyBookingsScreen() {
   const list = data ? data[tab] : null;
 
   return (
-    <Screen title={t('bookings.title')}>
-      <View style={{ gap: tokens.spacing.md }}>
+    <Screen>
+      <View style={{ gap: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
         <View style={{ flexDirection: 'row', gap: tokens.spacing.sm }}>
           <Chip label={t('bookings.active')} selected={tab === 'active'} onPress={() => setTab('active')} />
           <Chip label={t('bookings.past')} selected={tab === 'past'} onPress={() => setTab('past')} />

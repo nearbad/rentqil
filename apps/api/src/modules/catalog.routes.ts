@@ -39,6 +39,16 @@ export async function catalogRoutes(app: FastifyInstance) {
       orderBy: { createdAt: 'desc' },
     });
 
+    // the price slider in the app needs the ceiling across the catalog
+    let maxPriceTiyin = 0;
+    for (const venue of venues) {
+      for (const court of venue.courts) {
+        for (const rule of court.priceRules) {
+          if (rule.priceTiyin > maxPriceTiyin) maxPriceTiyin = rule.priceTiyin;
+        }
+      }
+    }
+
     let cards: { card: VenueCardView; matching: CourtWithRules[] }[] = [];
 
     for (const venue of venues) {
@@ -47,11 +57,19 @@ export async function catalogRoutes(app: FastifyInstance) {
       if (q.indoor !== undefined) matching = matching.filter((c) => c.indoor === q.indoor);
       if (matching.length === 0) continue;
       if (q.region && venue.region !== q.region) continue;
-      if (q.q && !venue.name.toLowerCase().includes(q.q.toLowerCase())) continue;
+      if (q.q) {
+        // name, city or district, street: one search box covers them all
+        const needle = q.q.toLowerCase();
+        const haystack = `${venue.name} ${venue.district} ${venue.address}`.toLowerCase();
+        if (!haystack.includes(needle)) continue;
+      }
 
       const card = venueCardView(venue, matching);
       if (q.priceMaxTiyin !== undefined) {
         if (card.priceFromTiyin === null || card.priceFromTiyin > q.priceMaxTiyin) continue;
+      }
+      if (q.priceMinTiyin !== undefined && q.priceMinTiyin > 0) {
+        if (card.priceFromTiyin === null || card.priceFromTiyin < q.priceMinTiyin) continue;
       }
       cards.push({ card, matching });
     }
@@ -96,7 +114,7 @@ export async function catalogRoutes(app: FastifyInstance) {
         .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
     }
 
-    return { items };
+    return { items, maxPriceTiyin };
   });
 
   app.get('/venues/:id', async (req) => {

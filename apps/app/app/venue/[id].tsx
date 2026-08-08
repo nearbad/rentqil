@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { DoorOpen, FileText, IdCard, Lightbulb, MapPin, ShowerHead, SquareParking, Users } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, DoorOpen, FileText, IdCard, Lightbulb, MapPin, ShowerHead, SquareParking, Users } from 'lucide-react-native';
 import type { Amenity, DayAvailabilityView, VenueDetailView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
@@ -35,6 +35,7 @@ export default function VenueScreen() {
   const desktop = width >= tokens.breakpointDesktop;
 
   const [venue, setVenue] = useState<VenueDetailView | null>(null);
+  const [photoIndex, setPhotoIndex] = useState(0);
   const [notFound, setNotFound] = useState(false);
   const [courtId, setCourtId] = useState<string | null>(null);
   const [days, setDays] = useState<DayAvailabilityView[] | null>(null);
@@ -119,26 +120,85 @@ export default function VenueScreen() {
     }
   };
 
-  const photoWidth = desktop ? 420 : Math.min(width, tokens.maxContentWidth) - tokens.spacing.lg * 2;
+  const photo = venue.photos[Math.min(photoIndex, venue.photos.length - 1)];
+  const stepPhoto = (dir: number) =>
+    setPhotoIndex((i) => (i + dir + venue.photos.length) % venue.photos.length);
 
   const infoColumn = (
     <View style={{ gap: tokens.spacing.lg, flex: desktop ? 1 : undefined }}>
-      {venue.photos.length > 0 ? (
-        <ScrollView horizontal pagingEnabled={!desktop} showsHorizontalScrollIndicator={false}>
-          {venue.photos.map((photo) => (
-            <Image
-              key={photo}
-              source={{ uri: photo }}
-              style={{
-                width: photoWidth,
-                height: desktop ? 280 : 200,
-                borderRadius: tokens.radius.md,
-                marginRight: tokens.spacing.sm,
-                backgroundColor: tokens.colors.gray50,
-              }}
-            />
-          ))}
-        </ScrollView>
+      {photo ? (
+        <View>
+          <Image
+            source={{ uri: photo }}
+            style={{
+              width: '100%',
+              height: desktop ? 300 : 210,
+              backgroundColor: tokens.colors.gray50,
+              borderWidth: tokens.border,
+              borderColor: tokens.colors.text,
+            }}
+          />
+          {venue.photos.length > 1 ? (
+            <>
+              <Pressable
+                onPress={() => stepPhoto(-1)}
+                hitSlop={tokens.hitSlop}
+                style={{
+                  position: 'absolute',
+                  left: 8,
+                  top: '50%',
+                  marginTop: -16,
+                  backgroundColor: tokens.colors.white,
+                  borderWidth: tokens.border,
+                  borderColor: tokens.colors.text,
+                  padding: 4,
+                }}
+              >
+                <ChevronLeft size={20} color={tokens.colors.text} strokeWidth={2} />
+              </Pressable>
+              <Pressable
+                onPress={() => stepPhoto(1)}
+                hitSlop={tokens.hitSlop}
+                style={{
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  marginTop: -16,
+                  backgroundColor: tokens.colors.white,
+                  borderWidth: tokens.border,
+                  borderColor: tokens.colors.text,
+                  padding: 4,
+                }}
+              >
+                <ChevronRight size={20} color={tokens.colors.text} strokeWidth={2} />
+              </Pressable>
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  alignSelf: 'center',
+                  flexDirection: 'row',
+                  gap: 6,
+                }}
+              >
+                {venue.photos.map((p, i) => (
+                  <Pressable
+                    key={p}
+                    onPress={() => setPhotoIndex(i)}
+                    hitSlop={tokens.hitSlop}
+                    style={{
+                      width: 10,
+                      height: 10,
+                      backgroundColor: i === photoIndex ? tokens.colors.text : tokens.colors.white,
+                      borderWidth: 1,
+                      borderColor: tokens.colors.text,
+                    }}
+                  />
+                ))}
+              </View>
+            </>
+          ) : null}
+        </View>
       ) : null}
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs, alignItems: 'center' }}>

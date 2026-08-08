@@ -1,19 +1,20 @@
 import React from 'react';
 import { ScrollView, View, useWindowDimensions } from 'react-native';
-import { X } from 'lucide-react-native';
 import { REGIONS, tokens, type Region } from '@rentqil/shared';
 import { useI18n } from '@/lib/i18n';
 import { useSports } from '@/lib/sports';
 import { addDaysYmd, todayYmd } from '@/lib/format';
+import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
-import { Input } from '@/ui/Input';
 import { Chip } from '@/ui/bits';
 import { Select } from '@/ui/Select';
+import { RangeSlider } from '@/ui/RangeSlider';
 import { SportIcon } from './SportIcon';
 
 export interface CatalogFilters {
   sport?: string;
   region?: Region;
+  priceMinSom?: number;
   priceMaxSom?: number;
   indoor?: boolean;
   date?: string;
@@ -24,10 +25,14 @@ export interface CatalogFilters {
 interface Props {
   filters: CatalogFilters;
   onChange: (filters: CatalogFilters) => void;
+  // ceiling for the price slider, comes from the catalog response
+  maxPriceSom: number;
 }
 
-// always visible filter row, every control applies instantly
-export function FilterBar({ filters, onChange }: Props) {
+const PRICE_STEP = 10_000;
+
+// always visible filter rows, every control applies instantly
+export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
   const { t, locale } = useI18n();
   const { sports } = useSports();
   const { width } = useWindowDimensions();
@@ -35,8 +40,18 @@ export function FilterBar({ filters, onChange }: Props) {
 
   const patch = (part: Partial<CatalogFilters>) => onChange({ ...filters, ...part });
 
+  const ceiling = Math.max(Math.ceil(maxPriceSom / PRICE_STEP) * PRICE_STEP, PRICE_STEP);
+  const priceLo = filters.priceMinSom ?? 0;
+  const priceHi = filters.priceMaxSom ?? ceiling;
+
   const active =
-    filters.sport || filters.region || filters.priceMaxSom || filters.indoor || filters.date || filters.sort !== 'default';
+    filters.sport ||
+    filters.region ||
+    filters.priceMinSom !== undefined ||
+    filters.priceMaxSom !== undefined ||
+    filters.indoor ||
+    filters.date ||
+    filters.sort !== 'default';
 
   const dateOptions = [
     { value: null, label: t('common.all') },
@@ -72,17 +87,29 @@ export function FilterBar({ filters, onChange }: Props) {
     </>
   );
 
+  const center = desktop ? ('center' as const) : ('flex-start' as const);
+
   return (
     <View style={{ gap: tokens.spacing.md }}>
       {desktop ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm }}>{sportChips}</View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm, justifyContent: center }}>
+          {sportChips}
+        </View>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: tokens.spacing.sm }}>
           {sportChips}
         </ScrollView>
       )}
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm, alignItems: 'flex-end' }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: tokens.spacing.md,
+          alignItems: 'flex-end',
+          justifyContent: center,
+        }}
+      >
         <Select
           compact
           value={filters.region ?? null}
@@ -111,16 +138,24 @@ export function FilterBar({ filters, onChange }: Props) {
             style={{ minWidth: 90 }}
           />
         ) : null}
-        <Input
-          value={filters.priceMaxSom?.toString() ?? ''}
-          onChangeText={(v) => {
-            const n = parseInt(v.replace(/\D/g, ''), 10);
-            patch({ priceMaxSom: Number.isFinite(n) && n > 0 ? n : undefined });
-          }}
-          keyboardType="number-pad"
-          placeholder={t('catalog.priceUpTo')}
-          style={{ minWidth: 170, paddingVertical: 8, fontSize: tokens.fontSize.small }}
-        />
+        <View style={{ width: desktop ? 260 : '100%', gap: 4 }}>
+          <AppText variant="tiny" color={tokens.colors.gray500}>
+            {t('catalog.priceUpTo')}: {priceLo.toLocaleString('ru-RU')} - {priceHi.toLocaleString('ru-RU')} so'm
+          </AppText>
+          <RangeSlider
+            min={0}
+            max={ceiling}
+            step={PRICE_STEP}
+            valueMin={priceLo}
+            valueMax={priceHi}
+            onChange={(lo, hi) =>
+              patch({
+                priceMinSom: lo > 0 ? lo : undefined,
+                priceMaxSom: hi < ceiling ? hi : undefined,
+              })
+            }
+          />
+        </View>
         <Chip
           label={t('catalog.indoorOnly')}
           selected={filters.indoor ?? false}
@@ -138,12 +173,7 @@ export function FilterBar({ filters, onChange }: Props) {
           style={{ minWidth: 130 }}
         />
         {active ? (
-          <Button
-            title={t('catalog.reset')}
-            variant="ghost"
-            small
-            onPress={() => onChange({ sort: 'default' })}
-          />
+          <Button title={t('catalog.reset')} variant="ghost" small onPress={() => onChange({ sort: 'default' })} />
         ) : null}
       </View>
     </View>

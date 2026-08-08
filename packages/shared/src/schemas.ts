@@ -21,6 +21,18 @@ export const otpVerifySchema = z.object({
   code: z.string().trim().regex(/^\d{6}$/),
 });
 
+const passwordSchema = z.string().min(6).max(72);
+
+// registration and password login share the same shape
+export const passwordAuthSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+export const passwordSetSchema = z.object({
+  password: passwordSchema,
+});
+
 export const updateMeSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   phone: phoneSchema.optional(),
@@ -40,6 +52,7 @@ const providerEnum = z.enum(
 export const catalogQuerySchema = z.object({
   sport: sportCode.optional(),
   region: regionEnum.optional(),
+  priceMinTiyin: z.coerce.number().int().min(0).optional(),
   priceMaxTiyin: z.coerce.number().int().positive().optional(),
   indoor: z
     .enum(['1', '0'])
@@ -126,6 +139,9 @@ export const venueUpsertSchema = z.object({
   lng: z.number().min(-180).max(180),
   photos: z.array(z.string().url()).max(10).default([]),
   amenities: z.array(z.enum(AMENITIES)).default([]),
+  // a new venue is one bookable field, the court is created with it
+  sport: sportCode.optional(),
+  indoor: z.boolean().default(false),
   requireNames: z.boolean().default(false),
   requireDocuments: z.boolean().default(false),
   terms: z.string().trim().max(2000).default(''),

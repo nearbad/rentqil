@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { createHash, randomInt } from 'node:crypto';
-import { otpRequestSchema, otpVerifySchema } from '@rentqil/shared';
+import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from 'node:crypto';
+import { otpRequestSchema, otpVerifySchema, passwordAuthSchema, passwordSetSchema } from '@rentqil/shared';
 import { prisma } from '../lib/db';
 import { parse } from '../lib/validate';
 import { errors } from '../lib/errors';
@@ -16,6 +16,20 @@ const mailer = createEmailProvider();
 
 function hashCode(email: string, code: string): string {
   return createHash('sha256').update(`${email}:${code}:${config.jwtSecret}`).digest('hex');
+}
+
+// scrypt with a per user salt, stored as salt:hash
+function hashPassword(password: string): string {
+  const salt = randomBytes(16);
+  const hash = scryptSync(password, salt, 64);
+  return `${salt.toString('hex')}:${hash.toString('hex')}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [saltHex, hashHex] = stored.split(':');
+  if (!saltHex || !hashHex) return false;
+  const hash = scryptSync(password, Buffer.from(saltHex, 'hex'), 64);
+  return timingSafeEqual(hash, Buffer.from(hashHex, 'hex'));
 }
 
 async function issueSession(app: FastifyInstance, userId: string) {
@@ -84,6 +98,48 @@ export async function authRoutes(app: FastifyInstance) {
       create: { email, role: email === config.adminEmail ? 'admin' : 'user' },
     });
     return issueSession(app, user.id);
+  });
+
+  // classic email plus password. registration is not email verified yet,
+  // the smtp stub blocks that; TODO send a confirm link once smtp is live
+  app.post('/auth/register', async (req) => {
+    const { email, password } = parse(passwordAuthSchema, req.body);
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing?.passwordHash) throw errors.emailTaken();
+
+    const user = existing
+      ? // account created earlier via code or google claims its password
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: { passwordHash: hashPassword(password) },
+        })
+      : await prisma.user.create({
+          data: {
+            email,
+            passwordHash: hashPassword(password),
+            role: email === config.adminEmail ? 'admin' : 'user',
+          },
+        });
+    return issueSession(app, user.id);
+  });
+
+  app.post('/auth/password/login', async (req) => {
+    const { email, password } = parse(passwordAuthSchema, req.body);
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
+      throw errors.passwordInvalid();
+    }
+    return issueSession(app, user.id);
+  });
+
+  // set or replace the password from the profile, code login acts as reset
+  app.post('/auth/password/set', { preHandler: app.requireUser }, async (req) => {
+    const { password } = parse(passwordSetSchema, req.body);
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { passwordHash: hashPassword(password) },
+    });
+    return { ok: true };
   });
 
   // google oauth, the classic server side code flow.

@@ -75,6 +75,7 @@ export async function ownerRoutes(app: FastifyInstance) {
 
   app.post('/owner/venues', ownerOnly, async (req) => {
     const body = parse(venueUpsertSchema, req.body);
+    if (body.sport) await assertSportExists(body.sport);
     const venue = await prisma.venue.create({
       data: {
         ownerId: req.user!.id,
@@ -92,6 +93,26 @@ export async function ownerRoutes(app: FastifyInstance) {
         terms: body.terms,
         status: 'pending',
         policy: { create: {} },
+        // one venue is one bookable field, the court is born with it
+        // and opens 8 to 23 every day until the owner adjusts
+        ...(body.sport
+          ? {
+              courts: {
+                create: {
+                  name: body.name,
+                  sport: body.sport,
+                  indoor: body.indoor,
+                  scheduleRules: {
+                    create: [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+                      dayOfWeek: day,
+                      openHour: 8,
+                      closeHour: 23,
+                    })),
+                  },
+                },
+              },
+            }
+          : {}),
       },
       include: venueInclude,
     });

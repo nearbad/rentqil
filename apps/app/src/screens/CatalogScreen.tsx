@@ -14,6 +14,7 @@ function buildQuery(filters: CatalogFilters, q: string, geo: { lat: number; lng:
   const params = new URLSearchParams();
   if (filters.sport) params.set('sport', filters.sport);
   if (filters.region) params.set('region', filters.region);
+  if (filters.priceMinSom) params.set('priceMinTiyin', String(somToTiyin(filters.priceMinSom)));
   if (filters.priceMaxSom) params.set('priceMaxTiyin', String(somToTiyin(filters.priceMaxSom)));
   if (filters.indoor) params.set('indoor', '1');
   if (filters.date) params.set('date', filters.date);
@@ -34,6 +35,7 @@ export function CatalogScreen() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<CatalogFilters>({ sort: 'default' });
   const [items, setItems] = useState<VenueCardView[] | null>(null);
+  const [maxPriceSom, setMaxPriceSom] = useState(1_000_000);
   const [error, setError] = useState(false);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,8 +45,9 @@ export function CatalogScreen() {
   const load = useCallback(async (qs: string) => {
     setError(false);
     try {
-      const res = await api<{ items: VenueCardView[] }>(`/venues${qs}`);
+      const res = await api<{ items: VenueCardView[]; maxPriceTiyin: number }>(`/venues${qs}`);
       setItems(res.items);
+      if (res.maxPriceTiyin > 0) setMaxPriceSom(Math.round(res.maxPriceTiyin / 100));
     } catch {
       setError(true);
       setItems([]);
@@ -75,11 +78,15 @@ export function CatalogScreen() {
   // 3 columns on wide desktops, 2 on small ones, a single column on phones
   const columns = width >= 1100 ? 3 : width >= 760 ? 2 : 1;
 
+  const desktop = width >= tokens.breakpointDesktop;
+
   return (
-    <Screen title={t('nav.catalog')} wide>
-      <View style={{ gap: tokens.spacing.lg }}>
-        <Input value={search} onChangeText={setSearch} placeholder={t('catalog.searchPlaceholder')} />
-        <FilterBar filters={filters} onChange={setFilters} />
+    <Screen wide>
+      <View style={{ gap: tokens.spacing.lg, paddingTop: desktop ? tokens.spacing.xl : tokens.spacing.md }}>
+        <View style={{ width: '100%', maxWidth: 460, alignSelf: desktop ? 'center' : 'stretch' }}>
+          <Input value={search} onChangeText={setSearch} placeholder={t('catalog.searchPlaceholder')} />
+        </View>
+        <FilterBar filters={filters} onChange={setFilters} maxPriceSom={maxPriceSom} />
 
         {error ? <ErrorBox message={t('error.NETWORK')} /> : null}
         {items === null ? (
