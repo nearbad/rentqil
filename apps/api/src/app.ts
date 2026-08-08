@@ -7,6 +7,7 @@ import { meRoutes } from './modules/me.routes';
 import { catalogRoutes } from './modules/catalog.routes';
 import { bookingsRoutes } from './modules/bookings.routes';
 import { paymentsRoutes } from './modules/payments.routes';
+import { splitRoutes } from './modules/split.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -38,6 +39,7 @@ export async function buildApp() {
   await app.register(catalogRoutes);
   await app.register(bookingsRoutes);
   await app.register(paymentsRoutes);
+  await app.register(splitRoutes);
 
   return app;
 }
