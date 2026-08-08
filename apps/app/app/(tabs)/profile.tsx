@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, ChevronRight, LayoutDashboard, ShieldCheck } from 'lucide-react-native';
-import type { Locale, MeView } from '@rentqil/shared';
-import { LOCALES, tokens } from '@rentqil/shared';
+import type { MeView } from '@rentqil/shared';
+import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
@@ -11,13 +11,7 @@ import { Screen } from '@/ui/Screen';
 import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
-import { Card, Chip, Divider } from '@/ui/bits';
-
-const LOCALE_LABELS: Record<Locale, string> = {
-  uz: "O'zbekcha",
-  ru: 'Русский',
-  en: 'English',
-};
+import { Card, Divider } from '@/ui/bits';
 
 function PasswordSection() {
   const { t } = useI18n();
@@ -73,7 +67,7 @@ function NavRow({ icon, label, onPress }: { icon: React.ReactNode; label: string
 }
 
 export default function ProfileScreen() {
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const { me, setSession, refresh, logout } = useAuth();
   const router = useRouter();
 
@@ -81,17 +75,6 @@ export default function ProfileScreen() {
   const [phone, setPhone] = useState(me?.phone ?? '+998');
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
-
-  const changeLocale = async (next: Locale) => {
-    setLocale(next);
-    if (me) {
-      try {
-        await api<MeView>('/me', { method: 'PATCH', body: { locale: next } });
-      } catch {
-        // local switch already applied, server sync is best effort
-      }
-    }
-  };
 
   const saveName = async () => {
     if (!me) return;
@@ -119,15 +102,6 @@ export default function ProfileScreen() {
         <View style={{ gap: tokens.spacing.lg, paddingTop: tokens.spacing.xl }}>
           <AppText color={tokens.colors.gray500}>{t('auth.loginRequired')}</AppText>
           <Button title={t('auth.title')} onPress={() => router.push('/login')} />
-          <Divider />
-          <AppText variant="small" color={tokens.colors.gray500}>
-            {t('profile.language')}
-          </AppText>
-          <View style={{ flexDirection: 'row', gap: tokens.spacing.sm }}>
-            {LOCALES.map((l) => (
-              <Chip key={l} label={LOCALE_LABELS[l]} selected={l === locale} onPress={() => changeLocale(l)} />
-            ))}
-          </View>
         </View>
       </Screen>
     );
@@ -151,17 +125,6 @@ export default function ProfileScreen() {
         </View>
 
         <PasswordSection />
-
-        <View style={{ gap: tokens.spacing.sm }}>
-          <AppText variant="small" color={tokens.colors.gray500}>
-            {t('profile.language')}
-          </AppText>
-          <View style={{ flexDirection: 'row', gap: tokens.spacing.sm }}>
-            {LOCALES.map((l) => (
-              <Chip key={l} label={LOCALE_LABELS[l]} selected={l === locale} onPress={() => changeLocale(l)} />
-            ))}
-          </View>
-        </View>
 
         <Divider />
 

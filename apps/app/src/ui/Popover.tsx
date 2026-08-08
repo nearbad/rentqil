@@ -11,23 +11,19 @@ interface Props {
   align?: 'left' | 'right';
 }
 
-// anchored dropdown panel on desktop, bottom sheet on small screens
+// dropdown panel anchored to its trigger on every screen size
 export function Popover({ renderTrigger, children, menuWidth = 260, align = 'left' }: Props) {
   const anchorRef = useRef<View>(null);
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
   const { width: winW, height: winH } = useWindowDimensions();
-  const desktop = winW >= tokens.breakpointDesktop;
+  // the panel never gets wider than the screen minus the side margins
+  const panelW = Math.min(menuWidth, winW - 16);
 
   const open = () => {
-    if (!desktop) {
-      setPos(null);
-      setVisible(true);
-      return;
-    }
     anchorRef.current?.measureInWindow((x, y, w, h) => {
-      const wanted = align === 'right' ? x + w - menuWidth : x;
-      const left = Math.max(8, Math.min(wanted, winW - menuWidth - 8));
+      const wanted = align === 'right' ? x + w - panelW : x;
+      const left = Math.max(8, Math.min(wanted, winW - panelW - 8));
       const below = winH - (y + h) - 16;
       const above = y - 16;
       // open downward when it fits, otherwise flip above the trigger
@@ -48,19 +44,16 @@ export function Popover({ renderTrigger, children, menuWidth = 260, align = 'lef
       <View ref={anchorRef} collapsable={false}>
         {renderTrigger(open)}
       </View>
-      <Modal visible={visible} transparent animationType={desktop ? 'fade' : 'slide'} onRequestClose={close}>
-        <Pressable
-          style={{ flex: 1, backgroundColor: desktop ? 'transparent' : 'rgba(10,10,10,0.4)' }}
-          onPress={close}
-        >
-          {desktop && pos ? (
+      <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
+        <Pressable style={{ flex: 1 }} onPress={close}>
+          {pos ? (
             <Pressable
               onPress={(e) => e.stopPropagation()}
               style={{
                 position: 'absolute',
                 top: pos.top,
                 left: pos.left,
-                width: menuWidth,
+                width: panelW,
                 backgroundColor: tokens.colors.white,
                 borderWidth: tokens.border,
                 borderColor: tokens.colors.text,
@@ -71,23 +64,7 @@ export function Popover({ renderTrigger, children, menuWidth = 260, align = 'lef
             >
               <ScrollView contentContainerStyle={{ padding: tokens.spacing.xs }}>{children(close)}</ScrollView>
             </Pressable>
-          ) : (
-            <Pressable
-              onPress={(e) => e.stopPropagation()}
-              style={{
-                marginTop: 'auto',
-                backgroundColor: tokens.colors.white,
-                borderTopLeftRadius: tokens.radius.lg,
-                borderTopRightRadius: tokens.radius.lg,
-                maxHeight: '70%',
-                width: '100%',
-                maxWidth: tokens.maxContentWidth,
-                alignSelf: 'center',
-              }}
-            >
-              <ScrollView contentContainerStyle={{ padding: tokens.spacing.sm }}>{children(close)}</ScrollView>
-            </Pressable>
-          )}
+          ) : null}
         </Pressable>
       </Modal>
     </>

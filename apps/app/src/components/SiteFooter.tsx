@@ -67,32 +67,81 @@ export function SiteFooter() {
           gap: tokens.spacing.lg,
         }}
       >
-        <View
-          style={{
-            flexDirection: desktop ? 'row' : 'column',
-            justifyContent: 'space-between',
-            gap: tokens.spacing.lg,
-          }}
-        >
-          <View style={{ gap: tokens.spacing.sm }}>
-            <AppText variant="h3" style={{ fontFamily: tokens.logoFontFamily }}>
-              rentqil
-              <AppText variant="h3" color={tokens.colors.accent} style={{ fontFamily: tokens.logoFontFamily }}>
-                !
+        {desktop ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: tokens.spacing.lg }}>
+            <View style={{ gap: tokens.spacing.sm }}>
+              <AppText variant="h3" style={{ fontFamily: tokens.logoFontFamily }}>
+                rentqil
+                <AppText variant="h3" color={tokens.colors.accent} style={{ fontFamily: tokens.logoFontFamily }}>
+                  !
+                </AppText>
               </AppText>
-            </AppText>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.md }}>
-              <Pressable onPress={() => Linking.openURL(TELEGRAM_URL)} hitSlop={6} accessibilityLabel="Telegram">
-                <Send size={18} color={tokens.colors.gray700} strokeWidth={1.6} />
-              </Pressable>
-              <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)} hitSlop={6} accessibilityLabel="Instagram">
-                <InstagramGlyph size={18} color={tokens.colors.gray700} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.md }}>
+                <Pressable onPress={() => Linking.openURL(TELEGRAM_URL)} hitSlop={6} accessibilityLabel="Telegram">
+                  <Send size={18} color={tokens.colors.gray700} strokeWidth={1.6} />
+                </Pressable>
+                <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)} hitSlop={6} accessibilityLabel="Instagram">
+                  <InstagramGlyph size={18} color={tokens.colors.gray700} />
+                </Pressable>
+              </View>
+              <Pressable
+                onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+                hitSlop={6}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
+                <Mail size={16} color={tokens.colors.gray700} strokeWidth={1.6} />
+                <AppText variant="small" color={tokens.colors.gray700}>
+                  {SUPPORT_EMAIL}
+                </AppText>
               </Pressable>
             </View>
+
+            <View style={{ gap: tokens.spacing.sm }}>
+              <FooterLink label={t('footer.partner')} onPress={() => go('/partner')} />
+              <FooterLink label={t('footer.privacy')} onPress={() => go('/legal/privacy')} />
+              <FooterLink label={t('footer.terms')} onPress={() => go('/legal/terms')} />
+              <FooterLink label={t('footer.offer')} onPress={() => go('/legal/offer')} />
+            </View>
+          </View>
+        ) : (
+          <View style={{ gap: tokens.spacing.lg }}>
+            {/* phones: wordmark and socials share the top row, links go in two columns */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <AppText variant="h3" style={{ fontFamily: tokens.logoFontFamily }}>
+                rentqil
+                <AppText variant="h3" color={tokens.colors.accent} style={{ fontFamily: tokens.logoFontFamily }}>
+                  !
+                </AppText>
+              </AppText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.lg }}>
+                <Pressable onPress={() => Linking.openURL(TELEGRAM_URL)} hitSlop={6} accessibilityLabel="Telegram">
+                  <Send size={20} color={tokens.colors.gray700} strokeWidth={1.6} />
+                </Pressable>
+                <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)} hitSlop={6} accessibilityLabel="Instagram">
+                  <InstagramGlyph size={20} color={tokens.colors.gray700} />
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: tokens.spacing.md }}>
+              <View style={{ width: '50%' }}>
+                <FooterLink label={t('footer.partner')} onPress={() => go('/partner')} />
+              </View>
+              <View style={{ width: '50%' }}>
+                <FooterLink label={t('footer.privacy')} onPress={() => go('/legal/privacy')} />
+              </View>
+              <View style={{ width: '50%' }}>
+                <FooterLink label={t('footer.terms')} onPress={() => go('/legal/terms')} />
+              </View>
+              <View style={{ width: '50%' }}>
+                <FooterLink label={t('footer.offer')} onPress={() => go('/legal/offer')} />
+              </View>
+            </View>
+
             <Pressable
               onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
               hitSlop={6}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
             >
               <Mail size={16} color={tokens.colors.gray700} strokeWidth={1.6} />
               <AppText variant="small" color={tokens.colors.gray700}>
@@ -100,18 +149,19 @@ export function SiteFooter() {
               </AppText>
             </Pressable>
           </View>
+        )}
 
-          <View style={{ gap: tokens.spacing.sm }}>
-            <FooterLink label={t('footer.partner')} onPress={() => go('/partner')} />
-            <FooterLink label={t('footer.privacy')} onPress={() => go('/legal/privacy')} />
-            <FooterLink label={t('footer.terms')} onPress={() => go('/legal/terms')} />
-            <FooterLink label={t('footer.offer')} onPress={() => go('/legal/offer')} />
-          </View>
+        <View
+          style={{
+            borderTopWidth: 1,
+            borderTopColor: tokens.colors.gray150,
+            paddingTop: tokens.spacing.md,
+          }}
+        >
+          <AppText variant="tiny" color={tokens.colors.gray500}>
+            © {year} rentqil. {t('footer.rights')}.
+          </AppText>
         </View>
-
-        <AppText variant="tiny" color={tokens.colors.gray500}>
-          © {year} rentqil. {t('footer.rights')}.
-        </AppText>
       </View>
     </View>
   );
