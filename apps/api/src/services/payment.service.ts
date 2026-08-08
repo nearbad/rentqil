@@ -107,6 +107,7 @@ export async function applyPaymentResult(
       where: { id: payment.id },
       data: { status: 'paid', paidAt: new Date(), externalId: txId },
     });
+    // TODO fiscal receipt (OFD) goes here when we integrate one, v1 skips it
 
     const booking = payment.booking;
     const expired =

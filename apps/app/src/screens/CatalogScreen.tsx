@@ -10,6 +10,7 @@ import { Input } from '@/ui/Input';
 import { EmptyState, ErrorBox, Loading } from '@/ui/bits';
 import { VenueCard } from '@/components/VenueCard';
 import { FiltersSheet, type CatalogFilters } from '@/components/FiltersSheet';
+import { LocaleSwitch } from '@/components/LocaleSwitch';
 
 function buildQuery(filters: CatalogFilters, q: string, geo: { lat: number; lng: number } | null): string {
   const params = new URLSearchParams();
@@ -80,13 +81,16 @@ export function CatalogScreen() {
     <Screen
       title={t('nav.catalog')}
       right={
-        <Pressable onPress={() => setSheetOpen(true)} hitSlop={tokens.hitSlop}>
-          <SlidersHorizontal
-            size={22}
-            color={filtersActive ? tokens.colors.text : tokens.colors.gray500}
-            strokeWidth={filtersActive ? 2 : 1.6}
-          />
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.md }}>
+          <LocaleSwitch />
+          <Pressable onPress={() => setSheetOpen(true)} hitSlop={tokens.hitSlop}>
+            <SlidersHorizontal
+              size={22}
+              color={filtersActive ? tokens.colors.text : tokens.colors.gray500}
+              strokeWidth={filtersActive ? 2 : 1.6}
+            />
+          </Pressable>
+        </View>
       }
     >
       <View style={{ gap: tokens.spacing.md }}>
