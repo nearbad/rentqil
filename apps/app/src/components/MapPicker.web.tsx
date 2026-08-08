@@ -7,7 +7,8 @@ import 'leaflet/dist/leaflet.css';
 interface Props {
   lat: number;
   lng: number;
-  onPick: (lat: number, lng: number) => void;
+  // address arrives when reverse geocoding worked out
+  onPick: (lat: number, lng: number, address?: string) => void;
 }
 
 // clickable map for the venue form: click drops the pin and reports coords.
@@ -37,7 +38,16 @@ export function MapPicker({ lat, lng, onPick }: Props) {
         const coords = e.get('coords');
         map?.geoObjects.removeAll();
         map?.geoObjects.add(new ymaps.Placemark(coords, {}, { preset: 'islands#blackDotIcon' }));
-        pickRef.current(Number(coords[0].toFixed(6)), Number(coords[1].toFixed(6)));
+        const lat = Number(coords[0].toFixed(6));
+        const lng = Number(coords[1].toFixed(6));
+        // ask the geocoder to name the spot, fall back to bare coords
+        ymaps
+          .geocode(coords, { results: 1 })
+          .then((res) => {
+            const obj = res.geoObjects.get(0);
+            pickRef.current(lat, lng, obj?.getAddressLine?.());
+          })
+          .catch(() => pickRef.current(lat, lng));
       });
     });
 

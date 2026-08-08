@@ -54,7 +54,14 @@ export function PriceSlider({ min, max, step, value, onChange }: Props) {
   };
 
   return (
-    <View onLayout={onLayout} style={{ height: KNOB + 6, justifyContent: 'center' }}>
+    <View
+      onLayout={onLayout}
+      style={{
+        height: KNOB + 6,
+        justifyContent: 'center',
+        ...(typeof document !== 'undefined' ? ({ touchAction: 'none', userSelect: 'none' } as object) : {}),
+      }}
+    >
       <View style={{ height: 4, marginHorizontal: KNOB / 2, backgroundColor: tokens.colors.gray150 }} />
       {width > 0 ? (
         <>
@@ -77,7 +84,9 @@ export function PriceSlider({ min, max, step, value, onChange }: Props) {
               backgroundColor: tokens.colors.text,
               borderWidth: 2,
               borderColor: tokens.colors.white,
-              ...(typeof document !== 'undefined' ? { cursor: 'pointer' as never } : {}),
+              ...(typeof document !== 'undefined'
+                ? ({ cursor: 'grab', touchAction: 'none', userSelect: 'none' } as object)
+                : {}),
             }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           />

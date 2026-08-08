@@ -4,7 +4,11 @@ import { MapPin } from 'lucide-react-native';
 import { tokens } from '@rentqil/shared';
 
 // native placeholder, owners pick coordinates on the web for now
-export function MapPicker(_props: { lat: number; lng: number; onPick: (lat: number, lng: number) => void }) {
+export function MapPicker(_props: {
+  lat: number;
+  lng: number;
+  onPick: (lat: number, lng: number, address?: string) => void;
+}) {
   return (
     <View
       style={{

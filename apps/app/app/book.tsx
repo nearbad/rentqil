@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Plus, X } from 'lucide-react-native';
 import type { BookingQuoteResponse, BookingView, PaymentProviderId } from '@rentqil/shared';
 import { splitEven, tokens } from '@rentqil/shared';
 import { api, ApiError } from '@/lib/api';
@@ -14,6 +13,7 @@ import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Card, Divider, ErrorBox, KeyValue, Loading } from '@/ui/bits';
 import { Input } from '@/ui/Input';
+import { Stepper } from '@/ui/Stepper';
 import { Toggle } from '@/ui/Toggle';
 import { ProviderSelect } from '@/components/ProviderSelect';
 import { PolicyBadgeView } from '@/components/PolicyBadgeView';
@@ -28,6 +28,7 @@ export default function BookScreen() {
   const [quote, setQuote] = useState<BookingQuoteResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState('+998');
+  const [players, setPlayers] = useState(2);
   const [split, setSplit] = useState(false);
   const [names, setNames] = useState<string[]>(['', '']);
   const [provider, setProvider] = useState<PaymentProviderId>('click');
@@ -48,13 +49,30 @@ export default function BookScreen() {
       );
   }, [params.courtId, params.date, params.start, params.end, t]);
 
+  // documents policy or a split means every player is named
+  const namesNeeded = split || (quote?.requireDocuments ?? false);
+  const maxPlayers = quote?.capacity ?? 30;
+
+  // the names list always mirrors the party size
+  useEffect(() => {
+    setNames((prev) => {
+      if (prev.length === players) return prev;
+      return Array.from({ length: players }, (_, i) => prev[i] ?? '');
+    });
+  }, [players]);
+
+  // a split needs at least two people
+  useEffect(() => {
+    if (split && players < 2) setPlayers(2);
+  }, [split, players]);
+
   const cleanNames = useMemo(() => names.map((n) => n.trim()), [names]);
-  const namesValid = cleanNames.every((n) => n.length >= 2);
+  const namesValid = !namesNeeded || cleanNames.every((n) => n.length >= 2);
 
   const perPerson = useMemo(() => {
     if (!quote || !split) return null;
-    return splitEven(quote.payNowTiyin, names.length)[0] ?? null;
-  }, [quote, split, names.length]);
+    return splitEven(quote.payNowTiyin, players)[0] ?? null;
+  }, [quote, split, players]);
 
   useEffect(() => {
     if (!me) {
@@ -64,7 +82,7 @@ export default function BookScreen() {
   }, [me, params, router]);
 
   const phoneValid = /^\+998\d{9}$/.test(phone.replace(/[\s-]/g, ''));
-  const canSubmit = phoneValid && (!split || namesValid);
+  const canSubmit = phoneValid && namesValid;
 
   const submit = async () => {
     if (!quote || !canSubmit) return;
@@ -79,6 +97,8 @@ export default function BookScreen() {
           startHour: Number(params.start),
           endHour: Number(params.end),
           contactPhone: phone.replace(/[\s-]/g, ''),
+          playersCount: players,
+          playerNames: namesNeeded && !split ? cleanNames : [],
           ...(split ? { split: { names: cleanNames } } : {}),
         },
       });
@@ -143,42 +163,38 @@ export default function BookScreen() {
         />
 
         <Card style={{ gap: tokens.spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View>
+              <AppText>{t('book.playersCount')}</AppText>
+              {quote.capacity ? (
+                <AppText variant="tiny" color={tokens.colors.gray500}>
+                  {t('book.maxPlayers', { n: quote.capacity })}
+                </AppText>
+              ) : null}
+            </View>
+            <Stepper value={players} min={split ? 2 : 1} max={maxPlayers} onChange={setPlayers} />
+          </View>
+
           <Toggle label={t('book.split')} value={split} onChange={setSplit} />
-          {split ? (
+
+          {namesNeeded ? (
             <>
               <AppText variant="small" color={tokens.colors.gray500}>
                 {t('book.splitNames')}
               </AppText>
               {names.map((name, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm }}>
-                  <View style={{ flex: 1 }}>
-                    <Input
-                      value={name}
-                      onChangeText={(v) => setNames((prev) => prev.map((n, j) => (j === i ? v : n)))}
-                      placeholder={i === 0 ? t('book.splitNameYou') : t('book.splitNamePlaceholder', { n: i + 1 })}
-                    />
-                  </View>
-                  {names.length > 2 ? (
-                    <Pressable
-                      onPress={() => setNames((prev) => prev.filter((_, j) => j !== i))}
-                      hitSlop={tokens.hitSlop}
-                    >
-                      <X size={18} color={tokens.colors.gray500} strokeWidth={1.6} />
-                    </Pressable>
-                  ) : null}
-                </View>
+                <Input
+                  key={i}
+                  value={name}
+                  onChangeText={(v) => setNames((prev) => prev.map((n, j) => (j === i ? v : n)))}
+                  placeholder={i === 0 ? t('book.splitNameYou') : t('book.splitNamePlaceholder', { n: i + 1 })}
+                />
               ))}
-              {names.length < 30 ? (
-                <Pressable
-                  onPress={() => setNames((prev) => [...prev, ''])}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}
-                >
-                  <Plus size={16} color={tokens.colors.text} strokeWidth={2} />
-                  <AppText variant="small" weight="semibold">
-                    {t('book.splitAddPlayer')}
-                  </AppText>
-                </Pressable>
-              ) : null}
+            </>
+          ) : null}
+
+          {split ? (
+            <>
               {perPerson !== null ? (
                 <KeyValue label={t('book.perPerson')} value={money(perPerson, locale)} strong />
               ) : null}

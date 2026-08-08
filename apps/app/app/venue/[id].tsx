@@ -240,7 +240,7 @@ export default function VenueScreen() {
       {venue.requireNames || venue.requireDocuments || venue.terms ? (
         <View style={{ gap: tokens.spacing.sm }}>
           <AppText variant="h3">{t('venue.conditions')}</AppText>
-          {venue.requireNames ? (
+          {venue.requireNames && !venue.requireDocuments ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <IdCard size={16} color={tokens.colors.gray700} strokeWidth={1.6} />
               <AppText variant="small" color={tokens.colors.gray700}>

@@ -15,8 +15,12 @@ export interface YmapsApi {
   Placemark: new (coords: [number, number], props: Record<string, unknown>, opts: Record<string, unknown>) => unknown;
   ready: (cb: () => void) => void;
   suggest: (query: string, opts?: { results?: number }) => Promise<{ displayName: string; value: string }[]>;
-  geocode: (query: string, opts?: Record<string, unknown>) => Promise<{
-    geoObjects: { get: (i: number) => { geometry: { getCoordinates: () => [number, number] } } | undefined };
+  geocode: (query: string | [number, number], opts?: Record<string, unknown>) => Promise<{
+    geoObjects: {
+      get: (i: number) =>
+        | { geometry: { getCoordinates: () => [number, number] }; getAddressLine?: () => string }
+        | undefined;
+    };
   }>;
 }
 

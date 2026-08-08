@@ -243,6 +243,10 @@ model Booking {
   serviceFeeTiyin Int
   // phone of the person responsible for the booking
   contactPhone    String @default("")
+  // party size, capped by the court capacity when the owner set one
+  playersCount    Int      @default(1)
+  // full names, required when the venue demands documents
+  playerNames     String[] @default([])
 
   isSplit    Boolean   @default(false)
   splitToken String?   @unique

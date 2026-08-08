@@ -41,6 +41,10 @@ export function bookingView(booking: BookingFull, viewerId: string | null): Book
     serviceFeeTiyin: booking.serviceFeeTiyin,
     payNowTiyin: booking.totalTiyin + booking.serviceFeeTiyin,
     contactPhone: booking.contactPhone,
+    playersCount: booking.playersCount,
+    playerNames: booking.isSplit
+      ? booking.participants.map((p) => p.fullName).filter(Boolean)
+      : booking.playerNames,
     isSplit: booking.isSplit,
     splitToken: booking.splitToken,
     participants: booking.participants.map((p) => ({
@@ -107,15 +111,34 @@ export async function quoteResponse(input: RangeInput): Promise<BookingQuoteResp
     holdMinutes: config.bookingTtlMinutes,
     splitHoldMinutes: config.splitTtlMinutes,
     policyBadge: policyBadge(court.venue.policy),
-    requireNames: court.venue.requireNames,
+    requireDocuments: court.venue.requireDocuments,
+    capacity: court.capacity,
   };
 }
 
 export async function createBooking(
   userId: string,
-  input: RangeInput & { contactPhone: string; split?: { names: string[] } }
+  input: RangeInput & {
+    contactPhone: string;
+    playersCount: number;
+    playerNames: string[];
+    split?: { names: string[] };
+  }
 ): Promise<BookingView> {
-  const { config, quote } = await quoteRange(input);
+  const { court, config, quote } = await quoteRange(input);
+
+  // the owner decides how many people fit on the field
+  if (court.capacity !== null && input.playersCount > court.capacity) {
+    throw errors.validation({ playersCount: `max ${court.capacity} players` });
+  }
+  // documents policy means every player is named up front
+  const names = input.split ? input.split.names : input.playerNames;
+  if (input.split && input.split.names.length !== input.playersCount) {
+    throw errors.validation({ playersCount: 'names must match the players count' });
+  }
+  if (court.venue.requireDocuments && names.length !== input.playersCount) {
+    throw errors.validation({ playerNames: 'every player must be named' });
+  }
 
   const ttlMinutes = input.split ? config.splitTtlMinutes : config.bookingTtlMinutes;
   const expiresAt = new Date(Date.now() + ttlMinutes * 60_000);
@@ -165,6 +188,8 @@ export async function createBooking(
         totalTiyin: quote.totalTiyin,
         serviceFeeTiyin: quote.serviceFeeTiyin,
         contactPhone: input.contactPhone,
+        playersCount: input.playersCount,
+        playerNames: split ? [] : input.playerNames,
         isSplit: split !== undefined,
         splitToken: split ? randomBytes(9).toString('base64url') : null,
         expiresAt,

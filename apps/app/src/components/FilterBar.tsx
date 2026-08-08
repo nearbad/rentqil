@@ -157,7 +157,7 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
             />
           </View>
           <AppText variant="tiny" weight="bold" style={{ minWidth: 62, textAlign: 'right' }}>
-            {priceHi >= 1000 ? `${Math.round(priceHi / 1000)}k` : priceHi} so'm
+            {priceHi >= 1000 ? `${Math.round(priceHi / 1000)}k` : priceHi} UZS
           </AppText>
         </View>
         <Chip

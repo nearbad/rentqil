@@ -25,6 +25,8 @@ export async function bookingsRoutes(app: FastifyInstance) {
       startHour: body.startHour,
       endHour: body.endHour,
       contactPhone: body.contactPhone,
+      playersCount: body.playersCount,
+      playerNames: body.playerNames,
       split: body.split,
     });
   });

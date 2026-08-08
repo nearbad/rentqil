@@ -32,6 +32,7 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
   const [indoor, setIndoor] = useState(false);
   const [openHour, setOpenHour] = useState(8);
   const [closeHour, setCloseHour] = useState(23);
+  const [capacity, setCapacity] = useState('10');
   const [uploading, setUploading] = useState(false);
   const [description, setDescription] = useState(initial?.description ?? '');
   const [address, setAddress] = useState(initial?.address ?? '');
@@ -41,7 +42,6 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
   const [lng, setLng] = useState(initial ? String(initial.lng) : '69.2797');
   const [photos, setPhotos] = useState(initial?.photos.join('\n') ?? '');
   const [amenities, setAmenities] = useState<Amenity[]>(initial?.amenities ?? []);
-  const [requireNames, setRequireNames] = useState(initial?.requireNames ?? false);
   const [requireDocuments, setRequireDocuments] = useState(initial?.requireDocuments ?? false);
   const [terms, setTerms] = useState(initial?.terms ?? '');
   const [busy, setBusy] = useState(false);
@@ -115,11 +115,20 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
     lng: parseFloat(lng),
     photos: photoList,
     amenities,
-    requireNames,
+    // documents imply named players, one flag covers both
+    requireNames: requireDocuments,
     requireDocuments,
     terms: terms.trim(),
-    // a brand new venue is one bookable field, sport spawns its court
-    ...(initial ? {} : { sport: sport || (sports[0]?.code ?? ''), indoor, openHour, closeHour }),
+    ...(initial
+      ? {}
+      : {
+          // a brand new venue is one bookable field, sport spawns its court
+          sport: sport || (sports[0]?.code ?? ''),
+          indoor,
+          openHour,
+          closeHour,
+          capacity: parseInt(capacity, 10) || undefined,
+        }),
   });
 
   return (
@@ -163,6 +172,13 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
             </View>
           </View>
           <Toggle label={t('owner.courtIndoor')} value={indoor} onChange={setIndoor} />
+          <Input
+            label={t('owner.courtCapacity')}
+            value={capacity}
+            onChangeText={setCapacity}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
         </View>
       ) : null}
       <Input
@@ -201,9 +217,10 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
         <MapPicker
           lat={parseFloat(lat) || 41.3111}
           lng={parseFloat(lng) || 69.2797}
-          onPick={(la, ln) => {
+          onPick={(la, ln, addr) => {
             setLat(String(la));
             setLng(String(ln));
+            if (addr) setAddress(addr);
           }}
         />
         <View style={{ flexDirection: 'row', gap: tokens.spacing.md }}>
@@ -249,7 +266,6 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
         <AppText variant="small" color={tokens.colors.gray500}>
           {t('owner.conditions')}
         </AppText>
-        <Toggle label={t('owner.requireNames')} value={requireNames} onChange={setRequireNames} />
         <Toggle label={t('owner.requireDocuments')} value={requireDocuments} onChange={setRequireDocuments} />
         <Input
           label={t('owner.terms')}

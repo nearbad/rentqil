@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /owner
+Sitemap: https://rentqil.com/sitemap.xml

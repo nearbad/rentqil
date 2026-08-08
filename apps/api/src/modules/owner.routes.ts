@@ -124,6 +124,7 @@ export async function ownerRoutes(app: FastifyInstance) {
                   name: body.name,
                   sport: body.sport,
                   indoor: body.indoor,
+                  capacity: body.capacity ?? null,
                   scheduleRules: {
                     create: [0, 1, 2, 3, 4, 5, 6].map((day) => ({
                       dayOfWeek: day,

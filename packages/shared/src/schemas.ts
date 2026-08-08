@@ -88,6 +88,9 @@ export const createBookingSchema = z
     endHour: hourSchema,
     // who answers for this booking at the venue
     contactPhone: phoneSchema,
+    playersCount: z.number().int().min(1).max(100),
+    // full names of everyone, required when the venue demands documents
+    playerNames: z.array(z.string().trim().min(2).max(80)).max(100).default([]),
     split: z
       .object({
         // full name of every player, the creator included
@@ -142,6 +145,7 @@ export const venueUpsertSchema = z.object({
   // a new venue is one bookable field, the court is created with it
   sport: sportCode.optional(),
   indoor: z.boolean().default(false),
+  capacity: z.number().int().min(1).max(100).optional(),
   // default daily working window for the new field, owner refines later
   openHour: z.number().int().min(0).max(23).optional(),
   closeHour: z.number().int().min(1).max(24).optional(),

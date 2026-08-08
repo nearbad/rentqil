@@ -12,10 +12,11 @@ export function tiyinToSom(tiyin: number): number {
   return tiyin / TIYIN_PER_SOM;
 }
 
+// the site shows one currency code everywhere
 const CURRENCY_LABEL: Record<Locale, string> = {
-  uz: "so'm",
-  ru: 'сум',
-  en: "so'm",
+  uz: 'UZS',
+  ru: 'UZS',
+  en: 'UZS',
 };
 
 // split an amount into n parts that sum exactly to the amount,
@@ -29,7 +30,7 @@ export function splitEven(amountTiyin: number, parts: number): number[] {
   return Array.from({ length: parts }, (_, i) => base + (i < remainder ? 1 : 0));
 }
 
-// "1 200 000 so'm", tiyin remainder is dropped for display (prices are whole soms)
+// "1 200 000 UZS", tiyin remainder is dropped for display (prices are whole soms)
 export function formatMoney(tiyin: number, locale: Locale = 'uz'): string {
   const negative = tiyin < 0;
   const som = Math.floor(Math.abs(tiyin) / TIYIN_PER_SOM);

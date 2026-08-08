@@ -52,7 +52,11 @@ export function Button({
           // hover lifts the block, pressing sinks it into its shadow
           ...(solid && !disabled && !loading && !pressed ? hardShadow(small ? 'sm' : 'md') : {}),
           ...(pressed && solid ? { transform: [{ translateX: 2 }, { translateY: 2 }] } : {}),
-          ...(hovered && !pressed && solid ? { transform: [{ rotate: '-2deg' }] } : {}),
+          ...(hovered && !pressed && solid
+            ? bang
+              ? { transform: [{ rotate: '-2deg' }] }
+              : { transform: [{ translateX: -2 }, { translateY: -2 }] }
+            : {}),
           ...(pressed && !solid ? { opacity: 0.6 } : {}),
         },
         style,
@@ -71,9 +75,10 @@ export function Button({
             <>
               {bang[1]}
               <AppText
+                variant={small ? 'small' : 'body'}
                 weight="bold"
                 color={tokens.colors.accent}
-                style={{ letterSpacing: 0.8, fontSize: (small ? tokens.fontSize.small : tokens.fontSize.body) * 1.25 }}
+                style={{ letterSpacing: 0.8 }}
               >
                 {bang[2]}
               </AppText>

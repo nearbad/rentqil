@@ -97,7 +97,9 @@ export interface BookingQuoteResponse extends BookingQuoteView {
   holdMinutes: number;
   splitHoldMinutes: number;
   policyBadge: PolicyBadge;
-  requireNames: boolean;
+  // documents imply full names of every player
+  requireDocuments: boolean;
+  capacity: number | null;
 }
 
 export interface ParticipantView {
@@ -125,6 +127,8 @@ export interface BookingView {
   serviceFeeTiyin: number;
   payNowTiyin: number;
   contactPhone: string;
+  playersCount: number;
+  playerNames: string[];
   isSplit: boolean;
   splitToken: string | null;
   participants: ParticipantView[];
