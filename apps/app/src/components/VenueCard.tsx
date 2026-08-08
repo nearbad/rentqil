@@ -82,7 +82,6 @@ export function VenueCard({ venue, fill }: { venue: VenueCardView; fill?: boolea
             gap: tokens.spacing.xs,
           }}
         >
-          <PolicyBadgeView badge={venue.policyBadge} compact />
           {venue.sports.map((s) => (
             <Chip
               key={s}
@@ -91,6 +90,7 @@ export function VenueCard({ venue, fill }: { venue: VenueCardView; fill?: boolea
               icon={<SportIcon icon={sportIcon(s)} size={12} color={tokens.colors.gray700} />}
             />
           ))}
+          <PolicyBadgeView badge={venue.policyBadge} compact />
         </View>
       </View>
     </Pressable>
