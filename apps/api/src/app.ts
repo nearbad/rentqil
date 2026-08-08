@@ -9,6 +9,7 @@ import { bookingsRoutes } from './modules/bookings.routes';
 import { paymentsRoutes } from './modules/payments.routes';
 import { splitRoutes } from './modules/split.routes';
 import { ownerRoutes } from './modules/owner.routes';
+import { adminRoutes } from './modules/admin.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -42,6 +43,7 @@ export async function buildApp() {
   await app.register(paymentsRoutes);
   await app.register(splitRoutes);
   await app.register(ownerRoutes);
+  await app.register(adminRoutes);
 
   return app;
 }

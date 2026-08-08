@@ -263,6 +263,16 @@ export interface ModerationItemView {
   requested: Record<string, unknown>;
 }
 
+export interface AdminPaymentRowView {
+  id: string;
+  provider: PaymentProviderId;
+  type: 'deposit' | 'split_share' | 'refund';
+  status: 'created' | 'paid' | 'failed' | 'refunded';
+  amountTiyin: number;
+  payerPhone: string | null;
+  createdAt: string;
+}
+
 export interface AdminPayoutRowView {
   ownerId: string;
   ownerName: string | null;
