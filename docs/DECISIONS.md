@@ -50,6 +50,14 @@ Two users grabbing the last slot: booking creation takes `pg_advisory_xact_lock(
 
 `Payment.provider` stores what the user picked (click / payme / uzum / paynet / uzum_nasiya). Execution is routed to MockProvider for all of them until we have contracts. Real adapter skeletons live next to it with TODOs where credentials and signature checks go. Mock sends a signed webhook over real HTTP to our own endpoint, so the confirm path is exercised the same way a real PSP would.
 
-## 13. Money is integer tiyin everywhere
+## 13. Prisma 7, rust-free client
+
+Prisma 7 with the pg driver adapter: query plans run in js, no engine
+binaries at runtime, which also makes docker images boring. The generated
+client lives in `apps/api/src/generated` (gitignored, rebuilt by
+`prisma generate`), the datasource url sits in `prisma.config.ts`.
+Deploys run `prisma migrate deploy` before start.
+
+## 14. Money is integer tiyin everywhere
 
 1 som = 100 tiyin. All amounts, config values included, are integer tiyin. Formatting to "1 200 000 so'm" happens only at the UI edge. No floats in money code, division only through helpers that distribute remainders.
