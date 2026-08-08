@@ -53,21 +53,24 @@ Typecheck everything: `pnpm typecheck`.
 
 ## Deploy
 
-Target setup is a single VPS (Hetzner) with docker compose: postgres + api + nginx serving the static web build.
+Target setup is a single VPS (Hetzner) with docker compose: postgres + api + nginx serving the static web build + caddy in front doing TLS. Caddy serves `DOMAIN` (web), `www.DOMAIN` (redirect) and `api.DOMAIN` (api) and pulls certificates from Let's Encrypt on its own.
 
 1. Install docker with the compose plugin, clone the repo.
-2. Create `.env` in the repo root, start from `.env.example`. The values that matter:
+2. Point dns at the server. In your dns panel (Cloudflare for rentqil.com) create three A records to the server ip: `@`, `www` and `api`. Add them as "DNS only" first so Let's Encrypt can issue the certificates; once https works you can flip the proxy (orange cloud) on with SSL mode "Full (strict)".
+3. Create `.env` in the repo root, start from `.env.example`. The values that matter:
 
 ```
 POSTGRES_PASSWORD=strong-random-string
 JWT_SECRET=long-random-string
 MOCK_WEBHOOK_SECRET=another-random-string
-WEB_URL=https://rentqil.example.com        # public url of the web app
-EXPO_PUBLIC_API_URL=https://api.rentqil.example.com   # public url of the api, baked into the web bundle
-ADMIN_PHONE=+998xxxxxxxxx                  # first admin account
+DOMAIN=rentqil.com                       # what caddy serves
+ACME_EMAIL=you@example.com               # Let's Encrypt expiry notices
+WEB_URL=https://rentqil.com              # public url of the web app
+EXPO_PUBLIC_API_URL=https://api.rentqil.com   # public url of the api, baked into the web bundle
+ADMIN_PHONE=+998xxxxxxxxx                # first admin account
 ```
 
-3. Build and start:
+4. Build and start:
 
 ```bash
 docker compose up -d --build
@@ -79,7 +82,9 @@ The api container runs `prisma migrate deploy` on every start. Seed once after t
 docker compose exec api pnpm exec tsx prisma/seed.ts
 ```
 
-4. Put your reverse proxy / TLS of choice in front (caddy or certbot + nginx). Point the web domain at port 80 and the api domain at port 3001. If you serve both from one domain instead, route `/` to the web container and set `EXPO_PUBLIC_API_URL` to the api path accordingly before building.
+Only caddy publishes host ports (80/443), the api and web containers stay on the internal network. To serve everything from one domain instead, route `/` to the web container in the Caddyfile and set `EXPO_PUBLIC_API_URL` to the api path accordingly before building.
+
+Admin login in production: with `SMS_PROVIDER=mock` the OTP code is printed to the api logs, so after opening the login screen run `docker compose logs api --tail 20` and grab the code there. Switch to eskiz once credentials exist.
 
 To change platform settings (service fee, commission, deposit bounds, timers) log in as the admin and open Admin -> Config. No redeploy needed.
 

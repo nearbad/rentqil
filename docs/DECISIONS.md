@@ -61,3 +61,7 @@ Deploys run `prisma migrate deploy` before start.
 ## 14. Money is integer tiyin everywhere
 
 1 som = 100 tiyin. All amounts, config values included, are integer tiyin. Formatting to "1 200 000 so'm" happens only at the UI edge. No floats in money code, division only through helpers that distribute remainders.
+
+## 15. Caddy terminates TLS in front of the compose stack
+
+One more container instead of certbot cron plus nginx configs. Caddy reads DOMAIN and ACME_EMAIL from env, renews Let's Encrypt certs on its own and proxies the web and api containers over the internal network, so only ports 80 and 443 are published on the host. Cloudflare stays in "DNS only" mode until the first cert is issued, after that the orange cloud proxy with "Full (strict)" works fine on top.
