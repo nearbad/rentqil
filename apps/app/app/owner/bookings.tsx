@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import type { OwnerBookingView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
@@ -56,11 +56,11 @@ export default function OwnerBookingsScreen() {
   return (
     <Screen title={t('owner.bookings')} back>
       <View style={{ gap: tokens.spacing.md }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: tokens.spacing.sm }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm }}>
           {Array.from({ length: 10 }, (_, i) => addDaysYmd(todayYmd(), i - 2)).map((d) => (
             <Chip key={d} label={shortDate(d, locale)} selected={d === date} onPress={() => setDate(d)} />
           ))}
-        </ScrollView>
+        </View>
 
         {items === null ? (
           <Loading />

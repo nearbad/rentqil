@@ -11,7 +11,7 @@ import { Screen } from '@/ui/Screen';
 import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
-import { Card, Divider, Loading } from '@/ui/bits';
+import { Card, Divider, ErrorBox, Loading } from '@/ui/bits';
 import { Select } from '@/ui/Select';
 import { Toggle } from '@/ui/Toggle';
 
@@ -117,29 +117,17 @@ function PricesEditor({ court, onSaved }: { court: CourtData; onSaved: () => voi
   const [to, setTo] = useState(22);
   const [priceSom, setPriceSom] = useState('');
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const dayOptions = [
-    { value: null as number | null, label: t('owner.anyDay') },
-    ...WEEK_UI_ORDER.map((d) => ({ value: d as number | null, label: t(`day.full.${d}` as never) })),
-  ];
-
-  const addRule = () => {
-    const som = parseInt(priceSom.replace(/\D/g, ''), 10);
-    if (!som || to <= from) return;
-    setRules((prev) => [
-      ...prev,
-      { id: `new-${Date.now()}`, dayOfWeek: day, startHour: from, endHour: to, priceTiyin: somToTiyin(som) },
-    ]);
-    setPriceSom('');
-  };
-
-  const save = async () => {
+  // every change is saved right away, no separate save step to forget
+  const persist = async (next: typeof rules) => {
     setBusy(true);
+    setError(null);
     try {
       await api(`/owner/courts/${court.id}/prices`, {
         method: 'PUT',
         body: {
-          rules: rules.map((r) => ({
+          rules: next.map((r) => ({
             dayOfWeek: r.dayOfWeek,
             startHour: r.startHour,
             endHour: r.endHour,
@@ -147,10 +135,28 @@ function PricesEditor({ court, onSaved }: { court: CourtData; onSaved: () => voi
           })),
         },
       });
+      setRules(next);
       onSaved();
+    } catch (e) {
+      setError(t('error.UNKNOWN'));
     } finally {
       setBusy(false);
     }
+  };
+
+  const dayOptions = [
+    { value: null as number | null, label: t('owner.anyDay') },
+    ...WEEK_UI_ORDER.map((d) => ({ value: d as number | null, label: t(`day.full.${d}` as never) })),
+  ];
+
+  const addRule = async () => {
+    const som = parseInt(priceSom.replace(/\D/g, ''), 10);
+    if (!som || to <= from) return;
+    await persist([
+      ...rules,
+      { id: `new-${rules.length}-${from}-${to}`, dayOfWeek: day, startHour: from, endHour: to, priceTiyin: somToTiyin(som) },
+    ]);
+    setPriceSom('');
   };
 
   return (
@@ -159,6 +165,7 @@ function PricesEditor({ court, onSaved }: { court: CourtData; onSaved: () => voi
       <AppText variant="tiny" color={tokens.colors.gray500}>
         {t('owner.priceHint')}
       </AppText>
+      {error ? <ErrorBox message={error} /> : null}
 
       {rules.map((rule) => (
         <View key={rule.id} style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm }}>
@@ -169,7 +176,7 @@ function PricesEditor({ court, onSaved }: { court: CourtData; onSaved: () => voi
           <AppText variant="small" weight="semibold">
             {Math.round(tiyinToSom(rule.priceTiyin)).toLocaleString(locale === 'en' ? 'en-US' : 'ru-RU')}
           </AppText>
-          <Pressable onPress={() => setRules((prev) => prev.filter((r) => r.id !== rule.id))} hitSlop={tokens.hitSlop}>
+          <Pressable onPress={() => persist(rules.filter((r) => r.id !== rule.id))} hitSlop={tokens.hitSlop}>
             <Trash2 size={16} color={tokens.colors.danger} strokeWidth={1.6} />
           </Pressable>
         </View>
@@ -193,9 +200,15 @@ function PricesEditor({ court, onSaved }: { court: CourtData; onSaved: () => voi
           keyboardType="number-pad"
           placeholder="350000"
         />
-        <Button title={t('owner.addPriceRule')} onPress={addRule} variant="secondary" small />
+        <Button
+          title={t('owner.addPriceRule')}
+          onPress={addRule}
+          variant="secondary"
+          small
+          loading={busy}
+          disabled={!parseInt(priceSom.replace(/\D/g, ''), 10)}
+        />
       </View>
-      <Button title={t('common.save')} onPress={save} loading={busy} small />
     </Card>
   );
 }

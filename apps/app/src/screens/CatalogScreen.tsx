@@ -14,7 +14,6 @@ function buildQuery(filters: CatalogFilters, q: string, geo: { lat: number; lng:
   const params = new URLSearchParams();
   if (filters.sport) params.set('sport', filters.sport);
   if (filters.region) params.set('region', filters.region);
-  if (filters.priceMinSom) params.set('priceMinTiyin', String(somToTiyin(filters.priceMinSom)));
   if (filters.priceMaxSom) params.set('priceMaxTiyin', String(somToTiyin(filters.priceMaxSom)));
   if (filters.indoor) params.set('indoor', '1');
   if (filters.date) params.set('date', filters.date);

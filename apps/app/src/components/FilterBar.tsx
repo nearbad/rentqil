@@ -8,13 +8,12 @@ import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/bits';
 import { Select } from '@/ui/Select';
-import { RangeSlider } from '@/ui/RangeSlider';
+import { PriceSlider } from '@/ui/RangeSlider';
 import { SportIcon } from './SportIcon';
 
 export interface CatalogFilters {
   sport?: string;
   region?: Region;
-  priceMinSom?: number;
   priceMaxSom?: number;
   indoor?: boolean;
   date?: string;
@@ -41,13 +40,11 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
   const patch = (part: Partial<CatalogFilters>) => onChange({ ...filters, ...part });
 
   const ceiling = Math.max(Math.ceil(maxPriceSom / PRICE_STEP) * PRICE_STEP, PRICE_STEP);
-  const priceLo = filters.priceMinSom ?? 0;
   const priceHi = filters.priceMaxSom ?? ceiling;
 
   const active =
     filters.sport ||
     filters.region ||
-    filters.priceMinSom !== undefined ||
     filters.priceMaxSom !== undefined ||
     filters.indoor ||
     filters.date ||
@@ -138,23 +135,30 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
             style={{ minWidth: 90 }}
           />
         ) : null}
-        <View style={{ width: desktop ? 210 : '100%', gap: 2 }}>
+        <View
+          style={{
+            width: desktop ? 300 : '100%',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: tokens.spacing.sm,
+            paddingBottom: 6,
+          }}
+        >
           <AppText variant="tiny" color={tokens.colors.gray500}>
-            {t('catalog.priceUpTo')}: {priceLo.toLocaleString('ru-RU')} - {priceHi.toLocaleString('ru-RU')} so'm
+            {t('catalog.priceUpTo')}
           </AppText>
-          <RangeSlider
-            min={0}
-            max={ceiling}
-            step={PRICE_STEP}
-            valueMin={priceLo}
-            valueMax={priceHi}
-            onChange={(lo, hi) =>
-              patch({
-                priceMinSom: lo > 0 ? lo : undefined,
-                priceMaxSom: hi < ceiling ? hi : undefined,
-              })
-            }
-          />
+          <View style={{ flex: 1 }}>
+            <PriceSlider
+              min={PRICE_STEP}
+              max={ceiling}
+              step={PRICE_STEP}
+              value={priceHi}
+              onChange={(v) => patch({ priceMaxSom: v < ceiling ? v : undefined })}
+            />
+          </View>
+          <AppText variant="tiny" weight="bold" style={{ minWidth: 62, textAlign: 'right' }}>
+            {priceHi >= 1000 ? `${Math.round(priceHi / 1000)}k` : priceHi} so'm
+          </AppText>
         </View>
         <Chip
           label={t('catalog.indoorOnly')}

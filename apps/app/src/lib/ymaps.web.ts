@@ -3,6 +3,8 @@
 // the app falls back to leaflet + osm tiles.
 
 export const YANDEX_MAPS_KEY = process.env.EXPO_PUBLIC_YANDEX_MAPS_KEY ?? '';
+// separate key for the http geosuggest api used by the address field
+export const YANDEX_SUGGEST_KEY = process.env.EXPO_PUBLIC_YANDEX_SUGGEST_KEY ?? '';
 
 // the api does not ship an uz locale, russian is the closest default
 const LANG: Record<string, string> = { uz: 'ru_RU', ru: 'ru_RU', en: 'en_US' };

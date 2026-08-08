@@ -17,10 +17,13 @@ import { AddressInput } from '@/components/AddressInput';
 
 interface Props {
   initial?: OwnerVenueView;
-  onSaved: (venue: OwnerVenueView) => void;
+  onSaved?: (venue: OwnerVenueView) => void;
+  // wizard mode: collect the payload instead of posting it
+  onDraft?: (body: Record<string, unknown>) => void;
+  draftLabel?: string;
 }
 
-export function VenueForm({ initial, onSaved }: Props) {
+export function VenueForm({ initial, onSaved, onDraft, draftLabel }: Props) {
   const { t, locale } = useI18n();
   const { sports } = useSports();
 
@@ -83,38 +86,41 @@ export function VenueForm({ initial, onSaved }: Props) {
   };
 
   const submit = async () => {
-    setBusy(true);
     setError(null);
+    const body = buildBody();
+    if (onDraft) {
+      onDraft(body);
+      return;
+    }
+    setBusy(true);
     try {
-      const body = {
-        name: name.trim(),
-        description: description.trim(),
-        address: address.trim(),
-        region,
-        district: district.trim(),
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-        photos: photos
-          .split('\n')
-          .map((p) => p.trim())
-          .filter(Boolean),
-        amenities,
-        requireNames,
-        requireDocuments,
-        terms: terms.trim(),
-        // a brand new venue is one bookable field, sport spawns its court
-        ...(initial ? {} : { sport: sport || (sports[0]?.code ?? ''), indoor, openHour, closeHour }),
-      };
       const venue = initial
         ? await api<OwnerVenueView>(`/owner/venues/${initial.id}`, { method: 'PATCH', body })
         : await api<OwnerVenueView>('/owner/venues', { method: 'POST', body });
-      onSaved(venue);
+      onSaved?.(venue);
     } catch (e) {
       setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
     } finally {
       setBusy(false);
     }
   };
+
+  const buildBody = (): Record<string, unknown> => ({
+    name: name.trim(),
+    description: description.trim(),
+    address: address.trim(),
+    region,
+    district: district.trim(),
+    lat: parseFloat(lat),
+    lng: parseFloat(lng),
+    photos: photoList,
+    amenities,
+    requireNames,
+    requireDocuments,
+    terms: terms.trim(),
+    // a brand new venue is one bookable field, sport spawns its court
+    ...(initial ? {} : { sport: sport || (sports[0]?.code ?? ''), indoor, openHour, closeHour }),
+  });
 
   return (
     <View style={{ gap: tokens.spacing.lg }}>
@@ -254,7 +260,7 @@ export function VenueForm({ initial, onSaved }: Props) {
           placeholder={t('owner.termsHint')}
         />
       </View>
-      <Button title={t('owner.sendToModeration')} onPress={submit} loading={busy} />
+      <Button title={draftLabel ?? t('owner.sendToModeration')} onPress={submit} loading={busy} />
     </View>
   );
 }

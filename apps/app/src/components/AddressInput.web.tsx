@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { tokens } from '@rentqil/shared';
 import { useI18n } from '@/lib/i18n';
-import { loadYmaps, YANDEX_MAPS_KEY } from '@/lib/ymaps.web';
+import { loadYmaps, YANDEX_MAPS_KEY, YANDEX_SUGGEST_KEY } from '@/lib/ymaps.web';
 import { AppText } from '@/ui/AppText';
 import { Input } from '@/ui/Input';
 
@@ -14,8 +14,16 @@ interface Props {
   onPickCoords?: (lat: number, lng: number) => void;
 }
 
-// address field with live yandex suggestions, falls back to a plain
-// input when no maps key is baked into the bundle
+interface SuggestResponse {
+  results?: {
+    title: { text: string };
+    subtitle?: { text: string };
+    address?: { formatted_address: string };
+  }[];
+}
+
+// address field with live suggestions from the yandex geosuggest api,
+// falls back to ymaps.suggest, then to a plain input without keys
 export function AddressInput({ label, value, onChangeText, regionLabel, onPickCoords }: Props) {
   const { locale } = useI18n();
   const [options, setOptions] = useState<string[]>([]);
@@ -25,7 +33,7 @@ export function AddressInput({ label, value, onChangeText, regionLabel, onPickCo
   const typedRef = useRef(false);
 
   useEffect(() => {
-    if (!YANDEX_MAPS_KEY || !typedRef.current) return;
+    if ((!YANDEX_SUGGEST_KEY && !YANDEX_MAPS_KEY) || !typedRef.current) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (value.trim().length < 3) {
       setOptions([]);
@@ -33,12 +41,28 @@ export function AddressInput({ label, value, onChangeText, regionLabel, onPickCo
       return;
     }
     debounceRef.current = setTimeout(async () => {
-      const ymaps = await loadYmaps(locale);
-      if (!ymaps) return;
+      const prefix = regionLabel ? `${regionLabel}, ` : '';
+      const query = `O'zbekiston, ${prefix}${value.trim()}`;
       try {
-        const prefix = regionLabel ? `${regionLabel}, ` : '';
-        const found = await ymaps.suggest(`O'zbekiston, ${prefix}${value.trim()}`, { results: 5 });
-        setOptions(found.map((s) => s.value));
+        let found: string[] = [];
+        if (YANDEX_SUGGEST_KEY) {
+          const url =
+            'https://suggest-maps.yandex.ru/v1/suggest' +
+            `?apikey=${encodeURIComponent(YANDEX_SUGGEST_KEY)}` +
+            `&text=${encodeURIComponent(query)}` +
+            `&lang=${locale === 'en' ? 'en' : 'ru'}&results=5&print_address=1`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const json = (await res.json()) as SuggestResponse;
+            found = (json.results ?? []).map(
+              (r) => r.address?.formatted_address ?? [r.title.text, r.subtitle?.text].filter(Boolean).join(', ')
+            );
+          }
+        } else {
+          const ymaps = await loadYmaps(locale);
+          if (ymaps) found = (await ymaps.suggest(query, { results: 5 })).map((s) => s.value);
+        }
+        setOptions(found);
         setOpen(found.length > 0);
       } catch {
         setOptions([]);
@@ -53,7 +77,7 @@ export function AddressInput({ label, value, onChangeText, regionLabel, onPickCo
     typedRef.current = false;
     onChangeText(address);
     setOpen(false);
-    if (!onPickCoords) return;
+    if (!onPickCoords || !YANDEX_MAPS_KEY) return;
     const ymaps = await loadYmaps(locale);
     if (!ymaps) return;
     try {

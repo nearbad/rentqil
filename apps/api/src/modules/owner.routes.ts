@@ -25,6 +25,28 @@ import { dbDate } from '../domain/slots';
 // fields that need admin eyes before going live on an approved venue
 const CRITICAL_FIELDS = ['name', 'description', 'address', 'region', 'district', 'lat', 'lng', 'photos'] as const;
 
+// base price all week, optional evening override, optional weekend override
+function buildStartingPrices(
+  baseTiyin: number,
+  eveningTiyin: number | undefined,
+  weekendTiyin: number | undefined,
+  openHour: number,
+  closeHour: number
+) {
+  const rules: { dayOfWeek: number | null; startHour: number; endHour: number; priceTiyin: number }[] = [
+    { dayOfWeek: null, startHour: openHour, endHour: closeHour, priceTiyin: baseTiyin },
+  ];
+  if (eveningTiyin && closeHour > 18) {
+    rules.push({ dayOfWeek: null, startHour: Math.max(18, openHour), endHour: closeHour, priceTiyin: eveningTiyin });
+  }
+  if (weekendTiyin) {
+    for (const day of [0, 6]) {
+      rules.push({ dayOfWeek: day, startHour: openHour, endHour: closeHour, priceTiyin: weekendTiyin });
+    }
+  }
+  return rules;
+}
+
 // court sports must exist in the admin managed catalog
 async function assertSportExists(code: string) {
   const sport = await prisma.sportType.findFirst({ where: { code, active: true } });
@@ -92,9 +114,9 @@ export async function ownerRoutes(app: FastifyInstance) {
         requireDocuments: body.requireDocuments,
         terms: body.terms,
         status: 'pending',
-        policy: { create: {} },
-        // one venue is one bookable field, the court is born with it
-        // and opens 8 to 23 every day until the owner adjusts
+        policy: { create: body.policy ?? {} },
+        // one venue is one bookable field, the court is born with it,
+        // complete with working hours and starting prices from the wizard
         ...(body.sport
           ? {
               courts: {
@@ -109,6 +131,17 @@ export async function ownerRoutes(app: FastifyInstance) {
                       closeHour: Math.max(body.closeHour ?? 23, (body.openHour ?? 8) + 1),
                     })),
                   },
+                  priceRules: body.priceTiyin
+                    ? {
+                        create: buildStartingPrices(
+                          body.priceTiyin,
+                          body.eveningPriceTiyin,
+                          body.weekendPriceTiyin,
+                          body.openHour ?? 8,
+                          Math.max(body.closeHour ?? 23, (body.openHour ?? 8) + 1)
+                        ),
+                      }
+                    : undefined,
                 },
               },
             }

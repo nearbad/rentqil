@@ -58,6 +58,7 @@ services:
         EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:?set EXPO_PUBLIC_API_URL in .env}
         # optional, empty means the web map falls back to osm tiles
         EXPO_PUBLIC_YANDEX_MAPS_KEY: ${EXPO_PUBLIC_YANDEX_MAPS_KEY:-}
+        EXPO_PUBLIC_YANDEX_SUGGEST_KEY: ${EXPO_PUBLIC_YANDEX_SUGGEST_KEY:-}
     restart: unless-stopped
     depends_on:
       - api

@@ -349,6 +349,14 @@ export const en: Record<keyof typeof uz, string> = {
   'owner.uploadPhotos': 'Upload photos',
   'owner.workingHours': 'Working hours (from / to)',
 
+  'common.next': 'Next',
+  'owner.stepBasics': 'The field',
+  'owner.stepPolicy': 'Cancellation',
+  'owner.stepPrices': 'Prices',
+  'owner.basePrice': 'Price per hour (som)',
+  'owner.eveningPrice': 'Evening price from 18:00 (som, optional)',
+  'owner.weekendPrice': 'Weekend price (som, optional)',
+
   'error.VALIDATION_ERROR': 'Invalid input',
   'error.UNAUTHORIZED': 'Please sign in first',
   'error.FORBIDDEN': 'Access denied',

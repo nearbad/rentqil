@@ -145,6 +145,17 @@ export const venueUpsertSchema = z.object({
   // default daily working window for the new field, owner refines later
   openHour: z.number().int().min(0).max(23).optional(),
   closeHour: z.number().int().min(1).max(24).optional(),
+  // wizard extras on creation: cancellation policy and starting prices
+  policy: z
+    .object({
+      refundEnabled: z.boolean(),
+      freeCancelHours: z.number().int().min(0).max(168),
+      lateRefundPercent: z.number().int().min(0).max(100),
+    })
+    .optional(),
+  priceTiyin: z.number().int().positive().optional(),
+  eveningPriceTiyin: z.number().int().positive().optional(),
+  weekendPriceTiyin: z.number().int().positive().optional(),
   requireNames: z.boolean().default(false),
   requireDocuments: z.boolean().default(false),
   terms: z.string().trim().max(2000).default(''),
@@ -187,8 +198,9 @@ const priceRuleSchema = z
   })
   .refine((r) => r.endHour > r.startHour, { message: 'endHour must be after startHour' });
 
+// zero rules is a valid state, it just means nothing is sellable yet
 export const priceSetSchema = z.object({
-  rules: z.array(priceRuleSchema).min(1).max(50),
+  rules: z.array(priceRuleSchema).max(50),
 });
 
 export const blockSlotSchema = z

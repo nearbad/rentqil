@@ -349,6 +349,14 @@ export const ru: Record<keyof typeof uz, string> = {
   'owner.uploadPhotos': 'Загрузить фото',
   'owner.workingHours': 'Рабочие часы (с / до)',
 
+  'common.next': 'Далее',
+  'owner.stepBasics': 'Площадка',
+  'owner.stepPolicy': 'Отмена',
+  'owner.stepPrices': 'Цены',
+  'owner.basePrice': 'Цена за час (сум)',
+  'owner.eveningPrice': 'Вечерняя цена с 18:00 (сум, необязательно)',
+  'owner.weekendPrice': 'Цена в выходные (сум, необязательно)',
+
   'error.VALIDATION_ERROR': 'Некорректные данные',
   'error.UNAUTHORIZED': 'Сначала войдите в аккаунт',
   'error.FORBIDDEN': 'Нет доступа',

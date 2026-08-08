@@ -367,6 +367,14 @@ export const uz = {
   'owner.uploadPhotos': 'Rasm yuklash',
   'owner.workingHours': 'Ish vaqti (dan / gacha)',
 
+  'common.next': 'Keyingi',
+  'owner.stepBasics': 'Maydon',
+  'owner.stepPolicy': 'Bekor qilish',
+  'owner.stepPrices': 'Narxlar',
+  'owner.basePrice': 'Soatlik narx (som)',
+  'owner.eveningPrice': 'Kechki narx 18:00 dan (som, ixtiyoriy)',
+  'owner.weekendPrice': 'Dam olish kunlari narxi (som, ixtiyoriy)',
+
   'error.VALIDATION_ERROR': "Ma'lumotlar noto'g'ri",
   'error.UNAUTHORIZED': 'Avval tizimga kiring',
   'error.FORBIDDEN': 'Ruxsat yoʻq',
