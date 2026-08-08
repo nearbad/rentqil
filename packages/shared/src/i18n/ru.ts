@@ -423,7 +423,6 @@ export const ru: Record<keyof typeof uz, string> = {
   'partner.contact': 'Email или Telegram',
   'partner.contactHint': 'vy@example.com или @username',
   'partner.inn': 'ИНН юрлица (необязательно)',
-  'partner.innInvalid': 'ИНН юрлица состоит из 9 цифр',
   'partner.message': 'Коротко о ваших площадках',
   'partner.submit': 'Отправить заявку',
   'partner.sent': 'Заявка принята',

@@ -165,39 +165,6 @@ export default function BookScreen() {
           </AppText>
         </Card>
 
-        <Card style={{ gap: tokens.spacing.sm }}>
-          <AppText variant="small" color={tokens.colors.gray500}>
-            {t('book.promoTitle')}
-          </AppText>
-          <View style={{ flexDirection: 'row', gap: tokens.spacing.sm, alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
-              <Input
-                value={promoInput}
-                onChangeText={setPromoInput}
-                placeholder={t('book.promoPlaceholder')}
-                autoCapitalize="characters"
-              />
-            </View>
-            <Button
-              title={t('book.promoApply')}
-              variant="secondary"
-              small
-              onPress={() => setPromo(promoInput.trim())}
-              disabled={!promoInput.trim() || promoInput.trim() === promo}
-            />
-          </View>
-          {quote.promoError ? (
-            <AppText variant="tiny" color={tokens.colors.danger}>
-              {t(`error.${quote.promoError}` as never)}
-            </AppText>
-          ) : null}
-          {quote.discountTiyin > 0 ? (
-            <AppText variant="tiny" color={tokens.colors.success}>
-              {t('book.promoApplied', { sum: money(quote.discountTiyin, locale) })}
-            </AppText>
-          ) : null}
-        </Card>
-
         <Input
           label={`${t('book.contactPhone')} *`}
           value={phone}
@@ -251,6 +218,39 @@ export default function BookScreen() {
               {t('book.holdNote', { min: quote.holdMinutes })}
             </AppText>
           )}
+        </Card>
+
+        <Card style={{ gap: tokens.spacing.sm }}>
+          <AppText variant="small" color={tokens.colors.gray500}>
+            {t('book.promoTitle')}
+          </AppText>
+          <View style={{ flexDirection: 'row', gap: tokens.spacing.sm, alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
+              <Input
+                value={promoInput}
+                onChangeText={setPromoInput}
+                placeholder={t('book.promoPlaceholder')}
+                autoCapitalize="characters"
+              />
+            </View>
+            <Button
+              title={t('book.promoApply')}
+              variant="secondary"
+              small
+              onPress={() => setPromo(promoInput.trim())}
+              disabled={!promoInput.trim() || promoInput.trim() === promo}
+            />
+          </View>
+          {quote.promoError ? (
+            <AppText variant="tiny" color={tokens.colors.danger}>
+              {t(`error.${quote.promoError}` as never)}
+            </AppText>
+          ) : null}
+          {quote.discountTiyin > 0 ? (
+            <AppText variant="tiny" color={tokens.colors.success}>
+              {t('book.promoApplied', { sum: money(quote.discountTiyin, locale) })}
+            </AppText>
+          ) : null}
         </Card>
 
         <View style={{ gap: tokens.spacing.sm }}>

@@ -14,7 +14,10 @@ import { Chip } from '@/ui/bits';
 import { PolicyBadgeView } from './PolicyBadgeView';
 import { SportIcon } from './SportIcon';
 
-export function VenueCard({ venue }: { venue: VenueCardView }) {
+// fill stretches the card to the grid cell height so desktop rows stay even;
+// the single column phone list must NOT stretch, '100%' of an auto parent
+// blows the card up to the whole page there
+export function VenueCard({ venue, fill }: { venue: VenueCardView; fill?: boolean }) {
   const { t, locale } = useI18n();
   const { sportName, sportIcon } = useSports();
   const router = useRouter();
@@ -29,7 +32,7 @@ export function VenueCard({ venue }: { venue: VenueCardView }) {
         borderColor: tokens.colors.text,
         overflow: 'hidden',
         backgroundColor: tokens.colors.white,
-        height: '100%',
+        height: fill ? '100%' : undefined,
         ...(pressed
           ? { transform: [{ translateX: 2 }, { translateY: 2 }] }
           : hovered
@@ -70,18 +73,24 @@ export function VenueCard({ venue }: { venue: VenueCardView }) {
             {venue.distanceKm !== undefined ? ` · ${t('catalog.kmAway', { km: venue.distanceKm })}` : ''}
           </AppText>
         </View>
-        <View style={{ marginTop: 'auto', gap: tokens.spacing.sm }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs }}>
-            {venue.sports.map((s) => (
-              <Chip
-                key={s}
-                label={sportName(s)}
-                small
-                icon={<SportIcon icon={sportIcon(s)} size={12} color={tokens.colors.gray700} />}
-              />
-            ))}
-          </View>
-          <PolicyBadgeView badge={venue.policyBadge} />
+        <View
+          style={{
+            marginTop: 'auto',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: tokens.spacing.xs,
+          }}
+        >
+          <PolicyBadgeView badge={venue.policyBadge} compact />
+          {venue.sports.map((s) => (
+            <Chip
+              key={s}
+              label={sportName(s)}
+              small
+              icon={<SportIcon icon={sportIcon(s)} size={12} color={tokens.colors.gray700} />}
+            />
+          ))}
         </View>
       </View>
     </Pressable>

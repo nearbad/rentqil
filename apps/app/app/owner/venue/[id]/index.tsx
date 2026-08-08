@@ -45,7 +45,8 @@ function PolicyEditor({ venue, onSaved }: { venue: OwnerVenueView; onSaved: () =
       <AppText variant="h3">{t('owner.policy')}</AppText>
       <Toggle label={t('owner.policyRefundEnabled')} value={refundEnabled} onChange={setRefundEnabled} />
       {refundEnabled ? (
-        <View style={{ flexDirection: 'row', gap: tokens.spacing.md }}>
+        // labels wrap to different line counts, bottom alignment keeps the boxes level
+        <View style={{ flexDirection: 'row', gap: tokens.spacing.md, alignItems: 'flex-end' }}>
           <View style={{ flex: 1 }}>
             <Input label={t('owner.policyFreeHours')} value={freeHours} onChangeText={setFreeHours} keyboardType="number-pad" />
           </View>

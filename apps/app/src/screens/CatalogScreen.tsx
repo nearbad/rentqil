@@ -126,7 +126,7 @@ export function CatalogScreen() {
                   marginBottom: tokens.spacing.lg,
                 }}
               >
-                <VenueCard venue={venue} />
+                <VenueCard venue={venue} fill />
               </View>
             ))}
           </View>

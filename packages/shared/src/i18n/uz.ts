@@ -441,7 +441,6 @@ export const uz = {
   'partner.contact': 'Email yoki Telegram',
   'partner.contactHint': 'siz@example.com yoki @username',
   'partner.inn': 'STIR / INN (yuridik shaxs, ixtiyoriy)',
-  'partner.innInvalid': 'Yuridik shaxs STIR raqami 9 ta raqamdan iborat',
   'partner.message': 'Maydonlaringiz haqida qisqacha',
   'partner.submit': 'Ariza yuborish',
   'partner.sent': 'Ariza qabul qilindi',

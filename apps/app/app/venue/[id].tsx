@@ -204,11 +204,24 @@ export default function VenueScreen() {
         </View>
       ) : null}
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs, alignItems: 'center' }}>
-        {venue.sports.map((s) => (
-          <Chip key={s} label={sportName(s)} small icon={<SportIcon icon={sportIcon(s)} size={12} />} />
-        ))}
-        <PolicyBadgeView badge={venue.policyBadge} />
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: tokens.spacing.xs,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs, alignItems: 'center' }}>
+          {venue.sports.map((s) => (
+            <Chip key={s} label={sportName(s)} small icon={<SportIcon icon={sportIcon(s)} size={12} />} />
+          ))}
+        </View>
+        {/* full cancellation text sits right under the photo, bottom right */}
+        <View style={{ marginLeft: 'auto' }}>
+          <PolicyBadgeView badge={venue.policyBadge} />
+        </View>
       </View>
 
       {venue.description ? (

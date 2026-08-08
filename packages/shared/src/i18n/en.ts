@@ -423,7 +423,6 @@ export const en: Record<keyof typeof uz, string> = {
   'partner.contact': 'Email or Telegram',
   'partner.contactHint': 'you@example.com or @username',
   'partner.inn': 'Company tax ID / INN (optional)',
-  'partner.innInvalid': 'INN of a legal entity is 9 digits',
   'partner.message': 'Briefly about your venues',
   'partner.submit': 'Send request',
   'partner.sent': 'Request received',
