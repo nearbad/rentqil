@@ -205,6 +205,11 @@ export interface OwnerVenueView extends VenueDetailView {
   policy: { refundEnabled: boolean; freeCancelHours: number; lateRefundPercent: number };
 }
 
+export interface OwnerBookingView extends BookingView {
+  creatorName: string | null;
+  creatorPhone: string;
+}
+
 export interface OwnerFinanceView {
   completedGrossTiyin: number;
   commissionHeldTiyin: number;
