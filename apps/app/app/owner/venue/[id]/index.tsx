@@ -3,9 +3,10 @@ import { Pressable, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import type { OwnerVenueView, PlatformConfigView } from '@rentqil/shared';
-import { SPORTS, tokens, type Sport } from '@rentqil/shared';
+import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
+import { useSports } from '@/lib/sports';
 import { useRequireRole } from '@/lib/guards';
 import { Screen } from '@/ui/Screen';
 import { AppText } from '@/ui/AppText';
@@ -60,9 +61,10 @@ function PolicyEditor({ venue, onSaved }: { venue: OwnerVenueView; onSaved: () =
 }
 
 function AddCourtForm({ venueId, onAdded }: { venueId: string; onAdded: () => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const { sports } = useSports();
   const [name, setName] = useState('');
-  const [sport, setSport] = useState<Sport>('football');
+  const [sport, setSport] = useState<string>('');
   const [indoor, setIndoor] = useState(false);
   const [capacity, setCapacity] = useState('');
   const [busy, setBusy] = useState(false);
@@ -75,7 +77,7 @@ function AddCourtForm({ venueId, onAdded }: { venueId: string; onAdded: () => vo
         method: 'POST',
         body: {
           name: name.trim(),
-          sport,
+          sport: sport || (sports[0]?.code ?? ''),
           indoor,
           capacity: parseInt(capacity, 10) || null,
         },
@@ -94,9 +96,9 @@ function AddCourtForm({ venueId, onAdded }: { venueId: string; onAdded: () => vo
       <Input label={t('owner.courtName')} value={name} onChangeText={setName} />
       <Select
         label={t('owner.courtSport')}
-        value={sport}
-        onChange={(v) => setSport(v as Sport)}
-        options={SPORTS.map((s) => ({ value: s, label: t(`sport.${s}`) }))}
+        value={sport || (sports[0]?.code ?? '')}
+        onChange={(v) => setSport(v as string)}
+        options={sports.map((s) => ({ value: s.code as string, label: s.names[locale] }))}
       />
       <Input label={t('owner.courtCapacity')} value={capacity} onChangeText={setCapacity} keyboardType="number-pad" />
       <Toggle label={t('owner.courtIndoor')} value={indoor} onChange={setIndoor} />
@@ -108,6 +110,7 @@ function AddCourtForm({ venueId, onAdded }: { venueId: string; onAdded: () => vo
 export default function OwnerVenueScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useI18n();
+  const { sportName } = useSports();
   const router = useRouter();
   const { ready } = useRequireRole('owner', 'admin');
 
@@ -190,7 +193,7 @@ export default function OwnerVenueScreen() {
               <View style={{ flex: 1 }}>
                 <AppText weight="medium">{court.name}</AppText>
                 <AppText variant="small" color={tokens.colors.gray500}>
-                  {t(`sport.${court.sport}`)} · {court.indoor ? t('court.indoor') : t('court.outdoor')}
+                  {sportName(court.sport)} · {court.indoor ? t('court.indoor') : t('court.outdoor')}
                 </AppText>
               </View>
               <ChevronRight size={18} color={tokens.colors.gray300} strokeWidth={1.6} />

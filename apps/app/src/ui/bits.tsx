@@ -27,25 +27,31 @@ export function Chip({
   selected,
   onPress,
   small,
+  icon,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   small?: boolean;
+  icon?: React.ReactNode;
 }) {
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={{
+      style={({ hovered }: { hovered?: boolean }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
         borderWidth: 1,
-        borderColor: selected ? tokens.colors.text : tokens.colors.gray150,
+        borderColor: selected ? tokens.colors.text : hovered && onPress ? tokens.colors.gray300 : tokens.colors.gray150,
         backgroundColor: selected ? tokens.colors.text : tokens.colors.white,
         borderRadius: 999,
         paddingVertical: small ? 4 : 7,
         paddingHorizontal: small ? tokens.spacing.sm : tokens.spacing.md,
-      }}
+      })}
     >
+      {icon}
       <AppText variant={small ? 'tiny' : 'small'} color={selected ? tokens.colors.white : tokens.colors.text}>
         {label}
       </AppText>

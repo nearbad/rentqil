@@ -67,6 +67,7 @@ DOMAIN=rentqil.com                       # what caddy serves
 ACME_EMAIL=you@example.com               # Let's Encrypt expiry notices
 WEB_URL=https://rentqil.com              # public url of the web app
 EXPO_PUBLIC_API_URL=https://api.rentqil.com   # public url of the api, baked into the web bundle
+EXPO_PUBLIC_YANDEX_MAPS_KEY=             # optional, maps fall back to osm without it
 ADMIN_PHONE=+998xxxxxxxxx                # first admin account
 ```
 

@@ -15,6 +15,8 @@ import {
   adminVenueCommissionSchema,
   applicationDecisionSchema,
   moderationDecisionSchema,
+  sportTypeCreateSchema,
+  sportTypeUpdateSchema,
   ymdSchema,
 } from '@rentqil/shared';
 import { z } from 'zod';
@@ -25,10 +27,11 @@ import { notifier } from '../lib/notifier';
 import { invalidateConfigCache } from '../services/config.service';
 import { bookingView } from '../services/booking.service';
 import { refundPayment } from '../services/payment.service';
+import { sportTypeView } from '../services/venue.service';
 import { dbDate } from '../domain/slots';
 
 // which venue fields land in the moderation diff for edits
-const MODERATED_KEYS = ['name', 'description', 'address', 'district', 'lat', 'lng', 'photos'] as const;
+const MODERATED_KEYS = ['name', 'description', 'address', 'region', 'district', 'lat', 'lng', 'photos'] as const;
 
 export async function adminRoutes(app: FastifyInstance) {
   const adminOnly = { preHandler: app.requireRole('admin') };
@@ -342,5 +345,31 @@ export async function adminRoutes(app: FastifyInstance) {
       data: { ownerId: body.ownerId, amountTiyin: body.amountTiyin, note: body.note ?? null },
     });
     return { ok: true };
+  });
+
+  // sport catalog, inactive rows are hidden from players but keep old courts valid
+
+  app.get('/admin/sports', adminOnly, async () => {
+    const sports = await prisma.sportType.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { nameEn: 'asc' }],
+    });
+    return { items: sports.map(sportTypeView) };
+  });
+
+  app.post('/admin/sports', adminOnly, async (req) => {
+    const body = parse(sportTypeCreateSchema, req.body);
+    const exists = await prisma.sportType.findUnique({ where: { code: body.code } });
+    if (exists) throw errors.validation({ code: 'sport code already exists' });
+    const sport = await prisma.sportType.create({ data: body });
+    return sportTypeView(sport);
+  });
+
+  app.patch('/admin/sports/:id', adminOnly, async (req) => {
+    const { id } = req.params as { id: string };
+    const body = parse(sportTypeUpdateSchema, req.body);
+    const found = await prisma.sportType.findUnique({ where: { id } });
+    if (!found) throw errors.notFound('sport');
+    const sport = await prisma.sportType.update({ where: { id }, data: body });
+    return sportTypeView(sport);
   });
 }

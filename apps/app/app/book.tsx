@@ -6,6 +6,7 @@ import { splitEven, tokens } from '@rentqil/shared';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
+import { useSports } from '@/lib/sports';
 import { hourRange, money, shortDate } from '@/lib/format';
 import { Screen } from '@/ui/Screen';
 import { AppText } from '@/ui/AppText';
@@ -19,6 +20,7 @@ import { PolicyBadgeView } from '@/components/PolicyBadgeView';
 export default function BookScreen() {
   const params = useLocalSearchParams<{ courtId: string; date: string; start: string; end: string }>();
   const { t, locale } = useI18n();
+  const { sportName } = useSports();
   const { me } = useAuth();
   const router = useRouter();
 
@@ -99,7 +101,7 @@ export default function BookScreen() {
         <Card style={{ gap: tokens.spacing.sm }}>
           <AppText variant="h3">{quote.venueName}</AppText>
           <AppText variant="small" color={tokens.colors.gray500}>
-            {quote.courtName} · {t(`sport.${quote.sport}`)}
+            {quote.courtName} · {sportName(quote.sport)}
           </AppText>
           <AppText weight="medium">
             {shortDate(quote.date, locale)} · {hourRange(quote.startHour, quote.endHour)}

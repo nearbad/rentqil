@@ -62,6 +62,18 @@ Deploys run `prisma migrate deploy` before start.
 
 1 som = 100 tiyin. All amounts, config values included, are integer tiyin. Formatting to "1 200 000 so'm" happens only at the UI edge. No floats in money code, division only through helpers that distribute remainders.
 
-## 15. Caddy terminates TLS in front of the compose stack
+## 15. Sports are data, regions are constants
+
+Sport types moved from a prisma enum to a SportType table with per locale names and an icon code, managed from the admin panel, because the platform serves the whole country and new sports must not require a deploy. Court.sport stays a plain string code validated on write. Regions are the 14 administrative divisions of Uzbekistan and basically never change, so they live as a shared constant with i18n labels, and the old fixed Tashkent district list became a free text field.
+
+## 16. One app, two shells
+
+Same screens serve phone and desktop. Below 920px wide the app looks like a mobile app: bottom tabs, single column, bottom sheet pickers. Above it the header carries the navigation, tabs disappear, the catalog becomes a grid, dropdowns anchor to their trigger. The breakpoint and both content widths are design tokens.
+
+## 17. Yandex maps with an osm fallback
+
+Venue maps and the owner's coordinate picker use the Yandex Maps JS API when EXPO_PUBLIC_YANDEX_MAPS_KEY is baked into the web bundle, and quietly fall back to leaflet + osm tiles when the key is empty. Yandex has the best coverage in Uzbekistan but requires a key, and the fallback keeps dev and test environments zero config.
+
+## 18. Caddy terminates TLS in front of the compose stack
 
 One more container instead of certbot cron plus nginx configs. Caddy reads DOMAIN and ACME_EMAIL from env, renews Let's Encrypt certs on its own and proxies the web and api containers over the internal network, so only ports 80 and 443 are published on the host. Cloudflare stays in "DNS only" mode until the first cert is issued, after that the orange cloud proxy with "Full (strict)" works fine on top.

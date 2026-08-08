@@ -52,7 +52,12 @@ export const radius = {
   lg: 12,
 } as const;
 
-// content column on wide screens, the app is mobile first
-export const maxContentWidth = 520;
+// forms and reading columns stay narrow, catalog style pages go wide
+export const maxContentWidth = 560;
+export const maxContentWide = 1160;
+
+// above this the app behaves like a desktop site:
+// top nav in the header, no bottom tab bar, multi column grids
+export const breakpointDesktop = 920;
 
 export const hitSlop = { top: 8, bottom: 8, left: 8, right: 8 } as const;

@@ -1,22 +1,42 @@
-export const SPORTS = ['football', 'tennis', 'padel', 'basketball', 'volleyball', 'gym'] as const;
-export type Sport = (typeof SPORTS)[number];
+// sport codes are stored as plain strings, the list itself lives in the
+// SportType table and is managed by the admin. Courts reference the code.
+export type Sport = string;
 
-// Tashkent districts, slugs used as stored values, labels live in i18n
-export const DISTRICTS = [
-  'bektemir',
-  'chilanzar',
-  'mirobod',
-  'mirzo_ulugbek',
-  'olmazor',
-  'sergeli',
-  'shaykhantahur',
-  'uchtepa',
-  'yakkasaray',
-  'yangihayot',
-  'yashnabad',
-  'yunusabad',
+// icon codes an admin can pick for a sport, the app maps them to lucide icons
+export const SPORT_ICONS = [
+  'football',
+  'tennis',
+  'basketball',
+  'volleyball',
+  'gym',
+  'swim',
+  'run',
+  'fight',
+  'table_tennis',
+  'bike',
+  'generic',
 ] as const;
-export type District = (typeof DISTRICTS)[number];
+export type SportIcon = (typeof SPORT_ICONS)[number];
+
+// administrative regions of Uzbekistan, slugs stored on venues,
+// display names live in i18n
+export const REGIONS = [
+  'tashkent_city',
+  'tashkent',
+  'andijan',
+  'bukhara',
+  'fergana',
+  'jizzakh',
+  'kashkadarya',
+  'khorezm',
+  'namangan',
+  'navoi',
+  'samarkand',
+  'sirdaryo',
+  'surkhandarya',
+  'karakalpakstan',
+] as const;
+export type Region = (typeof REGIONS)[number];
 
 export const AMENITIES = ['locker_room', 'shower', 'lighting', 'parking'] as const;
 export type Amenity = (typeof AMENITIES)[number];

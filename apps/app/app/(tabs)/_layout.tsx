@@ -1,4 +1,5 @@
 import React from 'react';
+import { useWindowDimensions } from 'react-native';
 import { Tabs } from 'expo-router';
 import { CalendarDays, Search, User } from 'lucide-react-native';
 import { tokens } from '@rentqil/shared';
@@ -6,6 +7,9 @@ import { useI18n } from '@/lib/i18n';
 
 export default function TabsLayout() {
   const { t } = useI18n();
+  const { width } = useWindowDimensions();
+  // on desktop the header nav replaces the bottom tabs
+  const desktop = width >= tokens.breakpointDesktop;
 
   return (
     <Tabs
@@ -16,6 +20,7 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: tokens.colors.bg,
           borderTopColor: tokens.colors.gray150,
+          display: desktop ? 'none' : 'flex',
         },
         tabBarLabelStyle: { fontSize: tokens.fontSize.tiny },
       }}

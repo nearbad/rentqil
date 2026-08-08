@@ -16,6 +16,7 @@ const SECTIONS = [
   { path: '/admin/moderation', key: 'admin.moderation' },
   { path: '/admin/users', key: 'admin.users' },
   { path: '/admin/bookings', key: 'admin.bookings' },
+  { path: '/admin/sports', key: 'admin.sports' },
   { path: '/admin/payouts', key: 'admin.payouts' },
   { path: '/admin/config', key: 'admin.config' },
 ] as const;

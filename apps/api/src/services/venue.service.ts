@@ -2,10 +2,11 @@ import type {
   DayAvailabilityView,
   PolicyBadge,
   SlotView,
+  SportTypeView,
   VenueCardView,
   VenueDetailView,
 } from '@rentqil/shared';
-import type { CancellationPolicy, Court, PriceRule, ScheduleRule, Venue } from '../lib/db';
+import type { CancellationPolicy, Court, PriceRule, ScheduleRule, SportType, Venue } from '../lib/db';
 import { prisma } from '../lib/db';
 import { errors } from '../lib/errors';
 import { getPlatformConfig } from './config.service';
@@ -62,7 +63,8 @@ export function venueCardView(venue: VenueFull, courts?: CourtWithRules[]): Venu
   return {
     id: venue.id,
     name: venue.name,
-    district: venue.district as VenueCardView['district'],
+    region: venue.region as VenueCardView['region'],
+    district: venue.district,
     address: venue.address,
     photos: venue.photos,
     sports: [...new Set(venue.courts.map((c) => c.sport))] as VenueCardView['sports'],
@@ -88,6 +90,17 @@ export function venueDetailView(venue: VenueFull): VenueDetailView {
       capacity: c.capacity,
       indoor: c.indoor,
     })),
+  };
+}
+
+export function sportTypeView(s: SportType): SportTypeView {
+  return {
+    id: s.id,
+    code: s.code,
+    names: { uz: s.nameUz, ru: s.nameRu, en: s.nameEn },
+    icon: s.icon as SportTypeView['icon'],
+    sortOrder: s.sortOrder,
+    active: s.active,
   };
 }
 

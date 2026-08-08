@@ -1,4 +1,4 @@
-import type { Amenity, BookingStatus, District, Locale, PaymentProviderId, Sport, Surface } from './constants';
+import type { Amenity, BookingStatus, Locale, PaymentProviderId, Region, Sport, SportIcon, Surface } from './constants';
 
 export type Role = 'user' | 'owner' | 'admin';
 
@@ -20,10 +20,21 @@ export type PolicyBadge =
   | { kind: 'no_refund' }
   | { kind: 'free_until'; hours: number; latePercent: number };
 
+// a sport row as served by the api, names are picked by locale on the client
+export interface SportTypeView {
+  id: string;
+  code: string;
+  names: Record<Locale, string>;
+  icon: SportIcon;
+  sortOrder: number;
+  active: boolean;
+}
+
 export interface VenueCardView {
   id: string;
   name: string;
-  district: District;
+  region: Region;
+  district: string;
   address: string;
   photos: string[];
   sports: Sport[];

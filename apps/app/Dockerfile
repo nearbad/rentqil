@@ -14,6 +14,8 @@ COPY apps/app apps/app
 # baked into the bundle at build time
 ARG EXPO_PUBLIC_API_URL
 ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL
+ARG EXPO_PUBLIC_YANDEX_MAPS_KEY
+ENV EXPO_PUBLIC_YANDEX_MAPS_KEY=$EXPO_PUBLIC_YANDEX_MAPS_KEY
 
 WORKDIR /app/apps/app
 RUN pnpm exec expo export --platform web

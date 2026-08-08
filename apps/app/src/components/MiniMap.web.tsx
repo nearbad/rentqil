@@ -1,12 +1,37 @@
 import React, { useEffect, useRef } from 'react';
 import { tokens } from '@rentqil/shared';
+import { useI18n } from '@/lib/i18n';
+import { loadYmaps, YANDEX_MAPS_KEY, type YmapsMap } from '@/lib/ymaps.web';
 import 'leaflet/dist/leaflet.css';
 
-// leaflet + osm tiles, web only
+// yandex map when a key is configured, leaflet + osm otherwise, web only
 export function MiniMap({ lat, lng }: { lat: number; lng: number; address: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { locale } = useI18n();
 
   useEffect(() => {
+    if (!YANDEX_MAPS_KEY) return;
+    let map: YmapsMap | null = null;
+    let cancelled = false;
+
+    loadYmaps(locale).then((ymaps) => {
+      if (!ymaps || cancelled || !containerRef.current) return;
+      map = new ymaps.Map(
+        containerRef.current,
+        { center: [lat, lng], zoom: 15, controls: [] },
+        { suppressMapOpenBlock: true }
+      );
+      map.geoObjects.add(new ymaps.Placemark([lat, lng], {}, { preset: 'islands#blackDotIcon' }));
+    });
+
+    return () => {
+      cancelled = true;
+      map?.destroy();
+    };
+  }, [lat, lng, locale]);
+
+  useEffect(() => {
+    if (YANDEX_MAPS_KEY) return;
     let map: import('leaflet').Map | null = null;
     let cancelled = false;
 
@@ -41,7 +66,7 @@ export function MiniMap({ lat, lng }: { lat: number; lng: number; address: strin
     <div
       ref={containerRef}
       style={{
-        height: 160,
+        height: 200,
         borderRadius: tokens.radius.md,
         overflow: 'hidden',
         border: `1px solid ${tokens.colors.gray150}`,

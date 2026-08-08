@@ -19,15 +19,6 @@ enum Locale {
   en
 }
 
-enum Sport {
-  football
-  tennis
-  padel
-  basketball
-  volleyball
-  gym
-}
-
 enum VenueStatus {
   pending
   approved
@@ -124,6 +115,8 @@ model Venue {
   name              String
   description       String      @default("")
   address           String
+  // region slug from the shared REGIONS list, district is free text
+  region            String      @default("tashkent_city")
   district          String
   lat               Float
   lng               Float
@@ -155,12 +148,27 @@ model CancellationPolicy {
   updatedAt         DateTime @updatedAt
 }
 
+// the sport catalog, managed from the admin panel
+model SportType {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  nameUz    String
+  nameRu    String
+  nameEn    String
+  // icon code from the shared SPORT_ICONS list
+  icon      String   @default("generic")
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 model Court {
   id       String  @id @default(cuid())
   venueId  String
   venue    Venue   @relation(fields: [venueId], references: [id])
   name     String
-  sport    Sport
+  // sport code, validated against SportType on write
+  sport    String
   surface  String?
   capacity Int?
   indoor   Boolean @default(false)

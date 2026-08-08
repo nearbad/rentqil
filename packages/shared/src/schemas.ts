@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AMENITIES, DISTRICTS, LOCALES, PAYMENT_PROVIDERS, SPORTS, SURFACES } from './constants';
+import { AMENITIES, LOCALES, PAYMENT_PROVIDERS, REGIONS, SPORT_ICONS, SURFACES } from './constants';
 
 export const phoneSchema = z
   .string()
@@ -24,15 +24,19 @@ export const updateMeSchema = z.object({
   locale: z.enum(LOCALES).optional(),
 });
 
-const sportEnum = z.enum(SPORTS);
-const districtEnum = z.enum(DISTRICTS);
+// sport codes come from the SportType table, existence is checked in the api
+const sportCode = z
+  .string()
+  .trim()
+  .regex(/^[a-z0-9_]{2,30}$/);
+const regionEnum = z.enum(REGIONS);
 const providerEnum = z.enum(
   PAYMENT_PROVIDERS.map((p) => p.id) as [string, ...string[]]
 );
 
 export const catalogQuerySchema = z.object({
-  sport: sportEnum.optional(),
-  district: districtEnum.optional(),
+  sport: sportCode.optional(),
+  region: regionEnum.optional(),
   priceMaxTiyin: z.coerce.number().int().positive().optional(),
   indoor: z
     .enum(['1', '0'])
@@ -98,7 +102,8 @@ export const venueUpsertSchema = z.object({
   name: z.string().trim().min(2).max(100),
   description: z.string().trim().max(2000).default(''),
   address: z.string().trim().min(3).max(200),
-  district: districtEnum,
+  region: regionEnum,
+  district: z.string().trim().min(2).max(80),
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   photos: z.array(z.string().url()).max(10).default([]),
@@ -114,7 +119,7 @@ export const policySchema = z.object({
 
 export const courtUpsertSchema = z.object({
   name: z.string().trim().min(1).max(80),
-  sport: sportEnum,
+  sport: sportCode,
   surface: z.enum(SURFACES).nullable().optional(),
   capacity: z.number().int().min(1).max(100).nullable().optional(),
   indoor: z.boolean().default(false),
@@ -200,3 +205,16 @@ export const applicationDecisionSchema = z.object({
   approve: z.boolean(),
   comment: z.string().trim().max(500).optional(),
 });
+
+export const sportTypeCreateSchema = z.object({
+  code: sportCode,
+  nameUz: z.string().trim().min(2).max(40),
+  nameRu: z.string().trim().min(2).max(40),
+  nameEn: z.string().trim().min(2).max(40),
+  icon: z.enum(SPORT_ICONS).default('generic'),
+  sortOrder: z.number().int().min(0).max(999).default(0),
+  active: z.boolean().default(true),
+});
+
+// code is fixed after creation, courts reference it
+export const sportTypeUpdateSchema = sportTypeCreateSchema.omit({ code: true }).partial();

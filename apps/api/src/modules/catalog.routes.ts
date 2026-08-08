@@ -9,6 +9,7 @@ import {
   busyRanges,
   courtAvailability,
   haversineKm,
+  sportTypeView,
   venueCardView,
   venueDetailView,
   venueInclude,
@@ -17,6 +18,15 @@ import {
 import { openHoursForDay, rangesOverlap, weekdayOf, ymdFromDb } from '../domain/slots';
 
 export async function catalogRoutes(app: FastifyInstance) {
+  // active sports for filters and forms, ordered the way the admin wants
+  app.get('/sports', async () => {
+    const sports = await prisma.sportType.findMany({
+      where: { active: true },
+      orderBy: [{ sortOrder: 'asc' }, { nameEn: 'asc' }],
+    });
+    return { items: sports.map(sportTypeView) };
+  });
+
   // public catalog with filters, the venue count is small enough
   // to filter in process for now
   app.get('/venues', async (req) => {
@@ -35,7 +45,7 @@ export async function catalogRoutes(app: FastifyInstance) {
       if (q.sport) matching = matching.filter((c) => c.sport === q.sport);
       if (q.indoor !== undefined) matching = matching.filter((c) => c.indoor === q.indoor);
       if (matching.length === 0) continue;
-      if (q.district && venue.district !== q.district) continue;
+      if (q.region && venue.region !== q.region) continue;
       if (q.q && !venue.name.toLowerCase().includes(q.q.toLowerCase())) continue;
 
       const card = venueCardView(venue, matching);

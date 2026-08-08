@@ -6,6 +6,7 @@ import { tokens } from '@rentqil/shared';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
+import { useSports } from '@/lib/sports';
 import { hourRange, minutesLeft, shortDate } from '@/lib/format';
 import { Screen } from '@/ui/Screen';
 import { AppText } from '@/ui/AppText';
@@ -19,6 +20,7 @@ import { CancelSection } from '@/components/CancelSection';
 export default function BookingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, locale } = useI18n();
+  const { sportName } = useSports();
   const { me } = useAuth();
   const router = useRouter();
 
@@ -104,7 +106,7 @@ export default function BookingScreen() {
             <StatusBadge status={booking.status} />
           </View>
           <AppText variant="small" color={tokens.colors.gray500}>
-            {t(`sport.${booking.sport}`)} · {booking.venueAddress}
+            {sportName(booking.sport)} · {booking.venueAddress}
           </AppText>
           <AppText weight="medium">
             {shortDate(booking.date, locale)} · {hourRange(booking.startHour, booking.endHour)}

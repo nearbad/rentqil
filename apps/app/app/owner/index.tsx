@@ -97,7 +97,7 @@ export default function OwnerHome() {
                     <ChevronRight size={18} color={tokens.colors.gray300} strokeWidth={1.6} />
                   </View>
                   <AppText variant="small" color={tokens.colors.gray500}>
-                    {t(`district.${venue.district}`)} · {venue.courts.length} {t('owner.courts').toLowerCase()}
+                    {venue.district} · {venue.courts.length} {t('owner.courts').toLowerCase()}
                   </AppText>
                   {venue.hasPendingChanges ? (
                     <Badge text={t('owner.pendingChanges')} />

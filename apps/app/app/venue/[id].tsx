@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import type { DayAvailabilityView, VenueDetailView } from '@rentqil/shared';
+import { DoorOpen, Lightbulb, MapPin, ShowerHead, SquareParking, Users } from 'lucide-react-native';
+import type { Amenity, DayAvailabilityView, VenueDetailView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
+import { useSports } from '@/lib/sports';
 import { money } from '@/lib/format';
 import { Screen } from '@/ui/Screen';
 import { AppText } from '@/ui/AppText';
@@ -14,13 +16,23 @@ import { Chip, Divider, EmptyState, Loading } from '@/ui/bits';
 import { PolicyBadgeView } from '@/components/PolicyBadgeView';
 import { MiniMap } from '@/components/MiniMap';
 import { SlotCalendar } from '@/components/SlotCalendar';
+import { SportIcon } from '@/components/SportIcon';
+
+const AMENITY_ICONS: Record<Amenity, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  locker_room: DoorOpen,
+  shower: ShowerHead,
+  lighting: Lightbulb,
+  parking: SquareParking,
+};
 
 export default function VenueScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, locale } = useI18n();
+  const { sportName, sportIcon } = useSports();
   const { me } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const desktop = width >= tokens.breakpointDesktop;
 
   const [venue, setVenue] = useState<VenueDetailView | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -95,7 +107,6 @@ export default function VenueScreen() {
     );
   }
 
-  const imageWidth = Math.min(width, tokens.maxContentWidth) - tokens.spacing.lg * 2;
   const court = venue.courts.find((c) => c.id === courtId) ?? null;
 
   const book = () => {
@@ -108,10 +119,121 @@ export default function VenueScreen() {
     }
   };
 
+  const photoWidth = desktop ? 420 : Math.min(width, tokens.maxContentWidth) - tokens.spacing.lg * 2;
+
+  const infoColumn = (
+    <View style={{ gap: tokens.spacing.lg, flex: desktop ? 1 : undefined }}>
+      {venue.photos.length > 0 ? (
+        <ScrollView horizontal pagingEnabled={!desktop} showsHorizontalScrollIndicator={false}>
+          {venue.photos.map((photo) => (
+            <Image
+              key={photo}
+              source={{ uri: photo }}
+              style={{
+                width: photoWidth,
+                height: desktop ? 280 : 200,
+                borderRadius: tokens.radius.md,
+                marginRight: tokens.spacing.sm,
+                backgroundColor: tokens.colors.gray50,
+              }}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs, alignItems: 'center' }}>
+        {venue.sports.map((s) => (
+          <Chip key={s} label={sportName(s)} small icon={<SportIcon icon={sportIcon(s)} size={12} />} />
+        ))}
+        <PolicyBadgeView badge={venue.policyBadge} />
+      </View>
+
+      {venue.description ? (
+        <View style={{ gap: tokens.spacing.xs }}>
+          <AppText variant="h3">{t('venue.about')}</AppText>
+          <AppText color={tokens.colors.gray700}>{venue.description}</AppText>
+        </View>
+      ) : null}
+
+      {venue.amenities.length > 0 ? (
+        <View style={{ gap: tokens.spacing.sm }}>
+          <AppText variant="h3">{t('venue.amenities')}</AppText>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.md }}>
+            {venue.amenities.map((a) => {
+              const Icon = AMENITY_ICONS[a] ?? Users;
+              return (
+                <View key={a} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon size={16} color={tokens.colors.gray700} strokeWidth={1.6} />
+                  <AppText variant="small" color={tokens.colors.gray700}>
+                    {t(`amenity.${a}`)}
+                  </AppText>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+
+      <View style={{ gap: tokens.spacing.sm }}>
+        <AppText variant="h3">{t('venue.address')}</AppText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <MapPin size={14} color={tokens.colors.gray500} strokeWidth={1.6} />
+          <AppText variant="small" color={tokens.colors.gray500} style={{ flexShrink: 1 }}>
+            {t(`region.${venue.region}`)}, {venue.district} · {venue.address}
+          </AppText>
+        </View>
+        <MiniMap lat={venue.lat} lng={venue.lng} address={venue.address} />
+      </View>
+    </View>
+  );
+
+  const calendarColumn = (
+    <View style={{ gap: tokens.spacing.md, flex: desktop ? 1 : undefined }}>
+      <AppText variant="h3">{t('venue.calendar')}</AppText>
+
+      {venue.courts.length > 1 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm }}>
+          {venue.courts.map((c) => (
+            <Chip
+              key={c.id}
+              label={`${c.name} · ${sportName(c.sport)}`}
+              selected={c.id === courtId}
+              onPress={() => setCourtId(c.id)}
+            />
+          ))}
+        </View>
+      ) : null}
+
+      {court ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm }}>
+          <Chip label={court.indoor ? t('court.indoor') : t('court.outdoor')} small />
+          {court.surface ? <Chip label={t(`surface.${court.surface}`)} small /> : null}
+          {court.capacity ? <Chip label={`${t('court.capacity')}: ${court.capacity}`} small /> : null}
+        </View>
+      ) : null}
+
+      {days === null ? (
+        <Loading />
+      ) : (
+        <SlotCalendar
+          days={days}
+          selectedDate={selectedDate}
+          onSelectDate={(d) => {
+            setSelectedDate(d);
+            setSelectedHours([]);
+          }}
+          selectedHours={selectedHours}
+          onToggleHour={toggleHour}
+        />
+      )}
+    </View>
+  );
+
   return (
     <Screen
       title={venue.name}
       back
+      wide
       footer={
         selection ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.lg }}>
@@ -126,100 +248,18 @@ export default function VenueScreen() {
         ) : undefined
       }
     >
-      <View style={{ gap: tokens.spacing.lg }}>
-        {venue.photos.length > 0 ? (
-          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ marginTop: tokens.spacing.xs }}>
-            {venue.photos.map((photo) => (
-              <Image
-                key={photo}
-                source={{ uri: photo }}
-                style={{
-                  width: imageWidth,
-                  height: 200,
-                  borderRadius: tokens.radius.md,
-                  marginRight: tokens.spacing.sm,
-                  backgroundColor: tokens.colors.gray50,
-                }}
-              />
-            ))}
-          </ScrollView>
-        ) : null}
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs, alignItems: 'center' }}>
-          {venue.sports.map((s) => (
-            <Chip key={s} label={t(`sport.${s}`)} small />
-          ))}
-          <PolicyBadgeView badge={venue.policyBadge} />
+      {desktop ? (
+        <View style={{ flexDirection: 'row', gap: tokens.spacing.xxl, alignItems: 'flex-start' }}>
+          {infoColumn}
+          {calendarColumn}
         </View>
-
-        {venue.description ? (
-          <View style={{ gap: tokens.spacing.xs }}>
-            <AppText variant="h3">{t('venue.about')}</AppText>
-            <AppText color={tokens.colors.gray700}>{venue.description}</AppText>
-          </View>
-        ) : null}
-
-        {venue.amenities.length > 0 ? (
-          <View style={{ gap: tokens.spacing.sm }}>
-            <AppText variant="h3">{t('venue.amenities')}</AppText>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm }}>
-              {venue.amenities.map((a) => (
-                <Chip key={a} label={t(`amenity.${a}`)} small />
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        <View style={{ gap: tokens.spacing.sm }}>
-          <AppText variant="h3">{t('venue.address')}</AppText>
-          <AppText variant="small" color={tokens.colors.gray500}>
-            {t(`district.${venue.district}`)} · {venue.address}
-          </AppText>
-          <MiniMap lat={venue.lat} lng={venue.lng} address={venue.address} />
+      ) : (
+        <View style={{ gap: tokens.spacing.lg }}>
+          {infoColumn}
+          <Divider />
+          {calendarColumn}
         </View>
-
-        <Divider />
-
-        <View style={{ gap: tokens.spacing.md }}>
-          <AppText variant="h3">{t('venue.calendar')}</AppText>
-
-          {venue.courts.length > 1 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: tokens.spacing.sm }}>
-              {venue.courts.map((c) => (
-                <Chip
-                  key={c.id}
-                  label={`${c.name} · ${t(`sport.${c.sport}`)}`}
-                  selected={c.id === courtId}
-                  onPress={() => setCourtId(c.id)}
-                />
-              ))}
-            </ScrollView>
-          ) : null}
-
-          {court ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm }}>
-              <Chip label={court.indoor ? t('court.indoor') : t('court.outdoor')} small />
-              {court.surface ? <Chip label={t(`surface.${court.surface}`)} small /> : null}
-              {court.capacity ? <Chip label={`${t('court.capacity')}: ${court.capacity}`} small /> : null}
-            </View>
-          ) : null}
-
-          {days === null ? (
-            <Loading />
-          ) : (
-            <SlotCalendar
-              days={days}
-              selectedDate={selectedDate}
-              onSelectDate={(d) => {
-                setSelectedDate(d);
-                setSelectedHours([]);
-              }}
-              selectedHours={selectedHours}
-              onToggleHour={toggleHour}
-            />
-          )}
-        </View>
-      </View>
+      )}
     </Screen>
   );
 }

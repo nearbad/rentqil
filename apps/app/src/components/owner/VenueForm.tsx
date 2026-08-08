@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import type { OwnerVenueView } from '@rentqil/shared';
-import { AMENITIES, DISTRICTS, tokens, type Amenity, type District } from '@rentqil/shared';
+import type { OwnerVenueView, Region } from '@rentqil/shared';
+import { AMENITIES, REGIONS, tokens, type Amenity } from '@rentqil/shared';
 import { api, ApiError } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { AppText } from '@/ui/AppText';
@@ -9,6 +9,7 @@ import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
 import { Chip, ErrorBox } from '@/ui/bits';
 import { Select } from '@/ui/Select';
+import { MapPicker } from '@/components/MapPicker';
 
 interface Props {
   initial?: OwnerVenueView;
@@ -22,9 +23,10 @@ export function VenueForm({ initial, depositBounds, onSaved }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [address, setAddress] = useState(initial?.address ?? '');
-  const [district, setDistrict] = useState<District>(initial?.district ?? 'chilanzar');
-  const [lat, setLat] = useState(initial ? String(initial.lat) : '41.31');
-  const [lng, setLng] = useState(initial ? String(initial.lng) : '69.25');
+  const [region, setRegion] = useState<Region>(initial?.region ?? 'tashkent_city');
+  const [district, setDistrict] = useState(initial?.district ?? '');
+  const [lat, setLat] = useState(initial ? String(initial.lat) : '41.3111');
+  const [lng, setLng] = useState(initial ? String(initial.lng) : '69.2797');
   const [photos, setPhotos] = useState(initial?.photos.join('\n') ?? '');
   const [amenities, setAmenities] = useState<Amenity[]>(initial?.amenities ?? []);
   const [deposit, setDeposit] = useState(initial ? String(initial.depositPercent) : '30');
@@ -42,7 +44,8 @@ export function VenueForm({ initial, depositBounds, onSaved }: Props) {
         name: name.trim(),
         description: description.trim(),
         address: address.trim(),
-        district,
+        region,
+        district: district.trim(),
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         photos: photos
@@ -74,19 +77,38 @@ export function VenueForm({ initial, depositBounds, onSaved }: Props) {
         multiline
         style={{ minHeight: 80 }}
       />
-      <Input label={t('owner.venueAddress')} value={address} onChangeText={setAddress} />
-      <Select
-        label={t('owner.venueDistrict')}
-        value={district}
-        onChange={(v) => setDistrict(v as District)}
-        options={DISTRICTS.map((d) => ({ value: d, label: t(`district.${d}`) }))}
-      />
-      <View style={{ flexDirection: 'row', gap: tokens.spacing.md }}>
-        <View style={{ flex: 1 }}>
-          <Input label={`${t('owner.coordinates')} lat`} value={lat} onChangeText={setLat} keyboardType="numbers-and-punctuation" />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.md }}>
+        <Select
+          label={t('owner.venueRegion')}
+          value={region as string}
+          onChange={(v) => setRegion(v as Region)}
+          options={REGIONS.map((r) => ({ value: r as string, label: t(`region.${r}`) }))}
+          style={{ minWidth: 200, flex: 1 }}
+        />
+        <View style={{ minWidth: 200, flex: 1 }}>
+          <Input label={t('owner.venueDistrict')} value={district} onChangeText={setDistrict} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Input label="lng" value={lng} onChangeText={setLng} keyboardType="numbers-and-punctuation" />
+      </View>
+      <Input label={t('owner.venueAddress')} value={address} onChangeText={setAddress} />
+      <View style={{ gap: tokens.spacing.sm }}>
+        <AppText variant="small" color={tokens.colors.gray500}>
+          {t('owner.mapPick')}
+        </AppText>
+        <MapPicker
+          lat={parseFloat(lat) || 41.3111}
+          lng={parseFloat(lng) || 69.2797}
+          onPick={(la, ln) => {
+            setLat(String(la));
+            setLng(String(ln));
+          }}
+        />
+        <View style={{ flexDirection: 'row', gap: tokens.spacing.md }}>
+          <View style={{ flex: 1 }}>
+            <Input label={`${t('owner.coordinates')} lat`} value={lat} onChangeText={setLat} keyboardType="numbers-and-punctuation" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Input label="lng" value={lng} onChangeText={setLng} keyboardType="numbers-and-punctuation" />
+          </View>
         </View>
       </View>
       <Input

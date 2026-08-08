@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
-import { SlidersHorizontal } from 'lucide-react-native';
+import { Platform, View, useWindowDimensions } from 'react-native';
 import type { VenueCardView } from '@rentqil/shared';
 import { somToTiyin, tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
@@ -9,13 +8,12 @@ import { Screen } from '@/ui/Screen';
 import { Input } from '@/ui/Input';
 import { EmptyState, ErrorBox, Loading } from '@/ui/bits';
 import { VenueCard } from '@/components/VenueCard';
-import { FiltersSheet, type CatalogFilters } from '@/components/FiltersSheet';
-import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { FilterBar, type CatalogFilters } from '@/components/FilterBar';
 
 function buildQuery(filters: CatalogFilters, q: string, geo: { lat: number; lng: number } | null): string {
   const params = new URLSearchParams();
   if (filters.sport) params.set('sport', filters.sport);
-  if (filters.district) params.set('district', filters.district);
+  if (filters.region) params.set('region', filters.region);
   if (filters.priceMaxSom) params.set('priceMaxTiyin', String(somToTiyin(filters.priceMaxSom)));
   if (filters.indoor) params.set('indoor', '1');
   if (filters.date) params.set('date', filters.date);
@@ -32,9 +30,9 @@ function buildQuery(filters: CatalogFilters, q: string, geo: { lat: number; lng:
 
 export function CatalogScreen() {
   const { t } = useI18n();
+  const { width } = useWindowDimensions();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<CatalogFilters>({ sort: 'default' });
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [items, setItems] = useState<VenueCardView[] | null>(null);
   const [error, setError] = useState(false);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
@@ -74,43 +72,43 @@ export function CatalogScreen() {
     }
   }, [filters.sort, geo]);
 
-  const filtersActive =
-    filters.sport || filters.district || filters.priceMaxSom || filters.indoor || filters.date || filters.sort !== 'default';
+  // 3 columns on wide desktops, 2 on small ones, a single column on phones
+  const columns = width >= 1100 ? 3 : width >= 760 ? 2 : 1;
 
   return (
-    <Screen
-      title={t('nav.catalog')}
-      right={
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.md }}>
-          <LocaleSwitch />
-          <Pressable onPress={() => setSheetOpen(true)} hitSlop={tokens.hitSlop}>
-            <SlidersHorizontal
-              size={22}
-              color={filtersActive ? tokens.colors.text : tokens.colors.gray500}
-              strokeWidth={filtersActive ? 2 : 1.6}
-            />
-          </Pressable>
-        </View>
-      }
-    >
-      <View style={{ gap: tokens.spacing.md }}>
+    <Screen title={t('nav.catalog')} wide>
+      <View style={{ gap: tokens.spacing.lg }}>
         <Input value={search} onChangeText={setSearch} placeholder={t('catalog.searchPlaceholder')} />
+        <FilterBar filters={filters} onChange={setFilters} />
 
         {error ? <ErrorBox message={t('error.NETWORK')} /> : null}
         {items === null ? (
           <Loading />
         ) : items.length === 0 ? (
           <EmptyState title={t('catalog.empty')} />
-        ) : (
+        ) : columns === 1 ? (
           <View style={{ gap: tokens.spacing.md }}>
             {items.map((venue) => (
               <VenueCard key={venue.id} venue={venue} />
             ))}
           </View>
+        ) : (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -tokens.spacing.sm }}>
+            {items.map((venue) => (
+              <View
+                key={venue.id}
+                style={{
+                  width: `${100 / columns}%`,
+                  paddingHorizontal: tokens.spacing.sm,
+                  marginBottom: tokens.spacing.lg,
+                }}
+              >
+                <VenueCard venue={venue} />
+              </View>
+            ))}
+          </View>
         )}
       </View>
-
-      <FiltersSheet visible={sheetOpen} initial={filters} onApply={setFilters} onClose={() => setSheetOpen(false)} />
     </Screen>
   );
 }

@@ -24,7 +24,13 @@ import { refundAllBookingPayments } from '../services/payment.service';
 import { dbDate } from '../domain/slots';
 
 // fields that need admin eyes before going live on an approved venue
-const CRITICAL_FIELDS = ['name', 'description', 'address', 'district', 'lat', 'lng', 'photos'] as const;
+const CRITICAL_FIELDS = ['name', 'description', 'address', 'region', 'district', 'lat', 'lng', 'photos'] as const;
+
+// court sports must exist in the admin managed catalog
+async function assertSportExists(code: string) {
+  const sport = await prisma.sportType.findFirst({ where: { code, active: true } });
+  if (!sport) throw errors.validation({ sport: 'unknown sport code' });
+}
 
 async function myVenue(req: FastifyRequest, venueId: string) {
   const venue = await prisma.venue.findUnique({ where: { id: venueId }, include: venueInclude });
@@ -83,6 +89,7 @@ export async function ownerRoutes(app: FastifyInstance) {
         name: body.name,
         description: body.description,
         address: body.address,
+        region: body.region,
         district: body.district,
         lat: body.lat,
         lng: body.lng,
@@ -165,6 +172,7 @@ export async function ownerRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     await myVenue(req, id);
     const body = parse(courtUpsertSchema, req.body);
+    await assertSportExists(body.sport);
     const court = await prisma.court.create({
       data: { venueId: id, ...body, surface: body.surface ?? null, capacity: body.capacity ?? null },
     });
@@ -175,6 +183,7 @@ export async function ownerRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     await myCourt(req, id);
     const body = parse(courtUpsertSchema.partial(), req.body);
+    if (body.sport !== undefined) await assertSportExists(body.sport);
     return prisma.court.update({ where: { id }, data: body });
   });
 

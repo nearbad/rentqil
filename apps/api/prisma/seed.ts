@@ -1,4 +1,4 @@
-import { PrismaClient, type Sport } from '../src/generated/prisma/client';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { somToTiyin } from '@rentqil/shared';
 import 'dotenv/config';
@@ -10,9 +10,20 @@ const ADMIN_PHONE = process.env.ADMIN_PHONE ?? '+998900000000';
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 const WEEKEND = [0, 6];
 
+// mirrors the base rows the migration inserts, upserted here so a fresh
+// database seeded without prior data still gets the full catalog
+const sports = [
+  { id: 'sport_football', code: 'football', nameUz: 'Futbol', nameRu: 'Футбол', nameEn: 'Football', icon: 'football', sortOrder: 1 },
+  { id: 'sport_tennis', code: 'tennis', nameUz: 'Tennis', nameRu: 'Теннис', nameEn: 'Tennis', icon: 'tennis', sortOrder: 2 },
+  { id: 'sport_padel', code: 'padel', nameUz: 'Padel', nameRu: 'Падел', nameEn: 'Padel', icon: 'tennis', sortOrder: 3 },
+  { id: 'sport_basketball', code: 'basketball', nameUz: 'Basketbol', nameRu: 'Баскетбол', nameEn: 'Basketball', icon: 'basketball', sortOrder: 4 },
+  { id: 'sport_volleyball', code: 'volleyball', nameUz: 'Voleybol', nameRu: 'Волейбол', nameEn: 'Volleyball', icon: 'volleyball', sortOrder: 5 },
+  { id: 'sport_gym', code: 'gym', nameUz: 'Trenajyor zali', nameRu: 'Тренажёрный зал', nameEn: 'Gym', icon: 'gym', sortOrder: 6 },
+];
+
 interface CourtSeed {
   name: string;
-  sport: Sport;
+  sport: string;
   surface: string | null;
   capacity: number | null;
   indoor: boolean;
@@ -28,6 +39,7 @@ interface VenueSeed {
   name: string;
   description: string;
   address: string;
+  region: string;
   district: string;
   lat: number;
   lng: number;
@@ -45,7 +57,8 @@ const venues: VenueSeed[] = [
     description:
       "Sun'iy maysali futbol maydonlari, kechki yoritish, dush va kiyinish xonalari. Metro Chilonzor 5 daqiqa.",
     address: "Chilonzor tumani, Bunyodkor shoh ko'chasi 12",
-    district: 'chilanzar',
+    region: 'tashkent_city',
+    district: 'Chilonzor',
     lat: 41.2795,
     lng: 69.2049,
     photos: [
@@ -87,7 +100,8 @@ const venues: VenueSeed[] = [
     description:
       'Ikkita xard kort va yopiq padel kort. Raketka ijarasi joyida, murabbiy xizmatlari alohida kelishiladi.',
     address: "Yunusobod tumani, Amir Temur shoh ko'chasi 107",
-    district: 'yunusabad',
+    region: 'tashkent_city',
+    district: 'Yunusobod',
     lat: 41.3565,
     lng: 69.2871,
     photos: [
@@ -137,7 +151,8 @@ const venues: VenueSeed[] = [
     description:
       "Yopiq basketbol va voleybol zali, parket qoplama. Jamoaviy mashg'ulotlar va musobaqalar uchun qulay.",
     address: "Mirzo Ulug'bek tumani, Buyuk ipak yo'li 55",
-    district: 'mirzo_ulugbek',
+    region: 'tashkent_city',
+    district: "Mirzo Ulug'bek",
     lat: 41.3258,
     lng: 69.3321,
     photos: ['https://picsum.photos/seed/rentqil-hall-1/900/600'],
@@ -166,10 +181,83 @@ const venues: VenueSeed[] = [
       },
     ],
   },
+  {
+    ownerPhone: '+998901112233',
+    name: 'Registon Football Park',
+    description:
+      "Samarqand markazidagi ochiq futbol maydonlari. Sun'iy maysa, kechki yoritish, jamoa uchun bepul parkovka.",
+    address: "Registon ko'chasi 8",
+    region: 'samarkand',
+    district: 'Samarqand shahri',
+    lat: 39.6547,
+    lng: 66.9758,
+    photos: [
+      'https://picsum.photos/seed/rentqil-registon-1/900/600',
+      'https://picsum.photos/seed/rentqil-registon-2/900/600',
+    ],
+    amenities: ['lighting', 'parking'],
+    depositPercent: 30,
+    policy: { refundEnabled: true, freeCancelHours: 6, lateRefundPercent: 30 },
+    courts: [
+      {
+        name: 'Maydon 1 (6x6)',
+        sport: 'football',
+        surface: 'artificial_grass',
+        capacity: 12,
+        indoor: false,
+        open: [9, 23],
+        baseSom: 250_000,
+        eveningSom: 320_000,
+        weekendSom: 320_000,
+      },
+    ],
+  },
+  {
+    ownerPhone: '+998901112233',
+    name: "Farg'ona Tennis Academy",
+    description:
+      "Ikkita yopiq kort, professional qoplama. Bolalar va kattalar uchun mashg'ulotlar, raketka ijarasi mavjud.",
+    address: "Al-Farg'oniy shoh ko'chasi 21",
+    region: 'fergana',
+    district: "Farg'ona shahri",
+    lat: 40.3864,
+    lng: 71.7864,
+    photos: ['https://picsum.photos/seed/rentqil-fergana-1/900/600'],
+    amenities: ['locker_room', 'shower', 'lighting', 'parking'],
+    depositPercent: 40,
+    policy: { refundEnabled: true, freeCancelHours: 24, lateRefundPercent: 50 },
+    courts: [
+      {
+        name: 'Kort A',
+        sport: 'tennis',
+        surface: 'hard',
+        capacity: 4,
+        indoor: true,
+        open: [8, 22],
+        baseSom: 100_000,
+        eveningSom: 130_000,
+      },
+      {
+        name: 'Kort B',
+        sport: 'tennis',
+        surface: 'hard',
+        capacity: 4,
+        indoor: true,
+        open: [8, 22],
+        baseSom: 100_000,
+        eveningSom: 130_000,
+      },
+    ],
+  },
 ];
 
 async function main() {
   await prisma.platformConfig.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+
+  for (const s of sports) {
+    await prisma.sportType.upsert({ where: { code: s.code }, update: {}, create: s });
+  }
+  console.log(`sports: ${sports.length}`);
 
   const admin = await prisma.user.upsert({
     where: { phone: ADMIN_PHONE },
@@ -208,6 +296,7 @@ async function main() {
         name: seed.name,
         description: seed.description,
         address: seed.address,
+        region: seed.region,
         district: seed.district,
         lat: seed.lat,
         lng: seed.lng,

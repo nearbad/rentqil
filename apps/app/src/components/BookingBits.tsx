@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import type { BookingStatus, BookingView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { useI18n } from '@/lib/i18n';
+import { useSports } from '@/lib/sports';
 import { hourRange, money, shortDate } from '@/lib/format';
 import { AppText } from '@/ui/AppText';
 import { Badge, Divider, KeyValue } from '@/ui/bits';
@@ -28,6 +29,7 @@ export function StatusBadge({ status }: { status: BookingStatus }) {
 
 export function BookingCard({ booking }: { booking: BookingView }) {
   const { t, locale } = useI18n();
+  const { sportName } = useSports();
   const router = useRouter();
 
   return (
@@ -50,7 +52,7 @@ export function BookingCard({ booking }: { booking: BookingView }) {
         <StatusBadge status={booking.status} />
       </View>
       <AppText variant="small" color={tokens.colors.gray500}>
-        {booking.courtName} · {t(`sport.${booking.sport}`)}
+        {booking.courtName} · {sportName(booking.sport)}
       </AppText>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <AppText variant="small" weight="medium">
