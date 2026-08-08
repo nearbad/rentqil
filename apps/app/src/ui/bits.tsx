@@ -2,17 +2,18 @@ import React from 'react';
 import { ActivityIndicator, Pressable, View, type ViewStyle } from 'react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
+import { hardShadow } from './shadow';
 
 export function Card({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
   return (
     <View
       style={[
         {
-          borderWidth: 1,
-          borderColor: tokens.colors.gray150,
-          borderRadius: tokens.radius.md,
+          borderWidth: tokens.border,
+          borderColor: tokens.colors.text,
           padding: tokens.spacing.lg,
           backgroundColor: tokens.colors.white,
+          ...hardShadow('sm'),
         },
         style,
       ]}
@@ -43,10 +44,9 @@ export function Chip({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
-        borderWidth: 1,
-        borderColor: selected ? tokens.colors.text : hovered && onPress ? tokens.colors.gray300 : tokens.colors.gray150,
+        borderWidth: small ? 1 : tokens.border,
+        borderColor: selected ? tokens.colors.text : hovered && onPress ? tokens.colors.text : small ? tokens.colors.gray300 : tokens.colors.text,
         backgroundColor: selected ? tokens.colors.text : tokens.colors.white,
-        borderRadius: 999,
         paddingVertical: small ? 4 : 7,
         paddingHorizontal: small ? tokens.spacing.sm : tokens.spacing.md,
       })}

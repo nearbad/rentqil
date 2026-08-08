@@ -82,6 +82,9 @@ export function venueDetailView(venue: VenueFull): VenueDetailView {
   return {
     ...venueCardView(venue),
     description: venue.description,
+    requireNames: venue.requireNames,
+    requireDocuments: venue.requireDocuments,
+    terms: venue.terms,
     courts: venue.courts.map((c) => ({
       id: c.id,
       name: c.name,

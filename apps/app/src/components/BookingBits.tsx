@@ -79,16 +79,11 @@ export function PriceBreakdown({ booking }: { booking: BookingView }) {
   return (
     <View style={{ gap: tokens.spacing.sm }}>
       <KeyValue label={t('book.total')} value={money(booking.totalTiyin, locale)} />
-      <KeyValue
-        label={t('book.deposit', { percent: Math.round((booking.depositTiyin / booking.totalTiyin) * 100) || 0 })}
-        value={money(booking.depositTiyin, locale)}
-      />
       {booking.serviceFeeTiyin > 0 ? (
         <KeyValue label={t('book.serviceFee')} value={money(booking.serviceFeeTiyin, locale)} />
       ) : null}
       <Divider />
       <KeyValue label={t('book.payNow')} value={money(booking.payNowTiyin, locale)} strong />
-      <KeyValue label={t('book.payAtVenue')} value={money(booking.totalTiyin - booking.depositTiyin, locale)} />
     </View>
   );
 }

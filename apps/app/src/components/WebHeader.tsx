@@ -40,7 +40,7 @@ export function WebHeader() {
   const go = (path: string) => router.push(path as never);
 
   return (
-    <View style={{ borderBottomWidth: 1, borderBottomColor: tokens.colors.gray150, backgroundColor: tokens.colors.bg }}>
+    <View style={{ borderBottomWidth: tokens.border, borderBottomColor: tokens.colors.text, backgroundColor: tokens.colors.bg }}>
       <View
         style={{
           width: '100%',
@@ -91,9 +91,9 @@ export function WebHeader() {
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 6,
-                  borderWidth: 1,
-                  borderColor: hovered ? tokens.colors.gray300 : tokens.colors.gray150,
-                  borderRadius: 999,
+                  borderWidth: tokens.border,
+                  borderColor: tokens.colors.text,
+                  backgroundColor: hovered ? tokens.colors.gray50 : tokens.colors.white,
                   paddingVertical: 5,
                   paddingHorizontal: tokens.spacing.md,
                 })}
@@ -106,7 +106,7 @@ export function WebHeader() {
                   <User size={14} color={tokens.colors.gray700} strokeWidth={1.6} />
                 )}
                 <AppText variant="small" weight="medium">
-                  {me.name || me.phone}
+                  {me.name || me.email || me.phone}
                 </AppText>
               </Pressable>
             ) : null}

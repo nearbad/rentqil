@@ -43,7 +43,7 @@ function PaymentsBlock({ bookingId }: { bookingId: string }) {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <AppText variant="tiny" color={tokens.colors.gray500} style={{ flex: 1 }}>
                 {p.createdAt.slice(5, 16).replace('T', ' ')} · {brand} · {p.type} · {p.status}
-                {p.payerPhone ? ` · ${p.payerPhone}` : ''}
+                {p.payerEmail ? ` · ${p.payerEmail}` : ''}
               </AppText>
               <AppText variant="small" weight="semibold">
                 {p.type === 'refund' ? '-' : ''}
@@ -123,7 +123,7 @@ export default function AdminBookingsScreen() {
                   <StatusBadge status={b.status} />
                 </View>
                 <AppText variant="small" color={tokens.colors.gray500}>
-                  {shortDate(b.date, locale)} · {hourRange(b.startHour, b.endHour)} · {b.creatorPhone}
+                  {shortDate(b.date, locale)} · {hourRange(b.startHour, b.endHour)} · {b.contactPhone || b.creatorEmail || '-'}
                 </AppText>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <AppText variant="small">{money(b.payNowTiyin, locale)}</AppText>

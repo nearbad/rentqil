@@ -81,10 +81,10 @@ export default function OwnerBookingsScreen() {
                 </AppText>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <AppText variant="small">
-                    {b.creatorName ?? '-'} · {b.creatorPhone}
+                    {b.creatorName ?? '-'} · {b.contactPhone || b.creatorEmail || '-'}
                   </AppText>
                   <AppText variant="small" weight="semibold">
-                    {money(b.depositTiyin, locale)}
+                    {money(b.totalTiyin, locale)}
                   </AppText>
                 </View>
                 {b.isSplit ? (

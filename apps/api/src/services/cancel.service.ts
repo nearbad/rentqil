@@ -55,8 +55,7 @@ function quoteFor(booking: BookingForCancel): CancelQuoteView {
       lateRefundPercent: policy?.lateRefundPercent ?? 0,
     },
     hoursToStart: hoursUntil(start, new Date()),
-    depositTiyin: booking.depositTiyin,
-    serviceFeeTiyin: booking.serviceFeeTiyin,
+    totalTiyin: booking.totalTiyin,
     paidTiyin,
   });
   return { allowed: true, refundTiyin: quote.refundTiyin, paidTiyin, reason: quote.reason };

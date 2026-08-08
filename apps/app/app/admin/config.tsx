@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import type { PlatformConfigView } from '@rentqil/shared';
-import { somToTiyin, tiyinToSom, tokens } from '@rentqil/shared';
+import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { useRequireRole } from '@/lib/guards';
@@ -10,17 +10,10 @@ import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
 import { Card, Loading } from '@/ui/bits';
-import { Toggle } from '@/ui/Toggle';
 
 // numeric fields are edited as strings and parsed on save
 interface Draft {
-  serviceFeeEnabled: boolean;
-  serviceFeeSom: string;
-  commissionEnabled: boolean;
-  commissionPercent: string;
-  defaultDepositPercent: string;
-  minDepositPercent: string;
-  maxDepositPercent: string;
+  serviceFeePercent: string;
   bookingTtlMinutes: string;
   splitTtlMinutes: string;
   calendarDays: string;
@@ -38,13 +31,7 @@ export default function AdminConfigScreen() {
     if (!ready) return;
     api<PlatformConfigView>('/admin/config').then((c) =>
       setDraft({
-        serviceFeeEnabled: c.serviceFeeEnabled,
-        serviceFeeSom: String(Math.round(tiyinToSom(c.serviceFeeTiyin))),
-        commissionEnabled: c.commissionEnabled,
-        commissionPercent: String(c.commissionPercent),
-        defaultDepositPercent: String(c.defaultDepositPercent),
-        minDepositPercent: String(c.minDepositPercent),
-        maxDepositPercent: String(c.maxDepositPercent),
+        serviceFeePercent: String(c.serviceFeePercent),
         bookingTtlMinutes: String(c.bookingTtlMinutes),
         splitTtlMinutes: String(c.splitTtlMinutes),
         calendarDays: String(c.calendarDays),
@@ -60,13 +47,7 @@ export default function AdminConfigScreen() {
       await api('/admin/config', {
         method: 'PATCH',
         body: {
-          serviceFeeEnabled: draft.serviceFeeEnabled,
-          serviceFeeTiyin: somToTiyin(parseInt(draft.serviceFeeSom, 10) || 0),
-          commissionEnabled: draft.commissionEnabled,
-          commissionPercent: parseInt(draft.commissionPercent, 10) || 0,
-          defaultDepositPercent: parseInt(draft.defaultDepositPercent, 10) || 0,
-          minDepositPercent: parseInt(draft.minDepositPercent, 10) || 0,
-          maxDepositPercent: parseInt(draft.maxDepositPercent, 10) || 100,
+          serviceFeePercent: parseInt(draft.serviceFeePercent, 10) || 0,
           bookingTtlMinutes: parseInt(draft.bookingTtlMinutes, 10) || 15,
           splitTtlMinutes: parseInt(draft.splitTtlMinutes, 10) || 60,
           calendarDays: parseInt(draft.calendarDays, 10) || 7,
@@ -95,60 +76,16 @@ export default function AdminConfigScreen() {
       <View style={{ gap: tokens.spacing.lg }}>
         <Card style={{ gap: tokens.spacing.md }}>
           <AppText variant="h3">{t('admin.configServiceFee')}</AppText>
-          <Toggle
-            label={t('admin.configServiceFeeEnabled')}
-            value={draft.serviceFeeEnabled}
-            onChange={(v) => patch({ serviceFeeEnabled: v })}
-          />
           <Input
-            label={t('admin.configServiceFeeSom')}
-            value={draft.serviceFeeSom}
-            onChangeText={(v) => patch({ serviceFeeSom: v })}
+            label={t('admin.configServiceFeePercent')}
+            value={draft.serviceFeePercent}
+            onChangeText={(v) => patch({ serviceFeePercent: v.replace(/\D/g, '') })}
             keyboardType="number-pad"
+            maxLength={3}
           />
-        </Card>
-
-        <Card style={{ gap: tokens.spacing.md }}>
-          <AppText variant="h3">{t('admin.configCommission')}</AppText>
-          <Toggle
-            label={t('admin.configCommissionEnabled')}
-            value={draft.commissionEnabled}
-            onChange={(v) => patch({ commissionEnabled: v })}
-          />
-          <Input
-            label={t('admin.configCommissionPercent')}
-            value={draft.commissionPercent}
-            onChangeText={(v) => patch({ commissionPercent: v })}
-            keyboardType="number-pad"
-          />
-        </Card>
-
-        <Card style={{ gap: tokens.spacing.md }}>
-          <AppText variant="h3">{t('admin.configDeposit')}</AppText>
-          <Input
-            label={t('admin.configDepositDefault')}
-            value={draft.defaultDepositPercent}
-            onChangeText={(v) => patch({ defaultDepositPercent: v })}
-            keyboardType="number-pad"
-          />
-          <View style={{ flexDirection: 'row', gap: tokens.spacing.md }}>
-            <View style={{ flex: 1 }}>
-              <Input
-                label={t('admin.configDepositMin')}
-                value={draft.minDepositPercent}
-                onChangeText={(v) => patch({ minDepositPercent: v })}
-                keyboardType="number-pad"
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Input
-                label={t('admin.configDepositMax')}
-                value={draft.maxDepositPercent}
-                onChangeText={(v) => patch({ maxDepositPercent: v })}
-                keyboardType="number-pad"
-              />
-            </View>
-          </View>
+          <AppText variant="tiny" color={tokens.colors.gray500}>
+            {t('admin.configServiceFeeNote')}
+          </AppText>
         </Card>
 
         <Card style={{ gap: tokens.spacing.md }}>

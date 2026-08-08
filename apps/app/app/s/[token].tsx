@@ -6,7 +6,6 @@ import { CheckCircle2, Circle } from 'lucide-react-native';
 import type { PaymentProviderId, SplitPublicView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api, ApiError } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { hourRange, minutesLeft, money, shortDate } from '@/lib/format';
 import { Screen } from '@/ui/Screen';
@@ -18,16 +17,16 @@ import { QrCode } from '@/components/QrCode';
 import { StatusBadge } from '@/components/BookingBits';
 import { splitLink } from '@/components/SplitSection';
 
+// the whole page works without an account, the link is the access key
 export default function SplitScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const { t, locale } = useI18n();
-  const { me } = useAuth();
   const router = useRouter();
 
   const [view, setView] = useState<SplitPublicView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [provider, setProvider] = useState<PaymentProviderId>('click');
-  const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
@@ -50,30 +49,25 @@ export default function SplitScreen() {
     return () => clearInterval(timer);
   }, [view?.status, load]);
 
-  const nextShare = useMemo(
-    () => view?.participants.find((p) => p.status === 'pending'),
+  const pendingShares = useMemo(
+    () => view?.participants.filter((p) => p.status === 'pending') ?? [],
     [view]
   );
 
-  const payShare = async () => {
-    if (!view || !nextShare) return;
-    if (!me) {
-      router.push(`/login?next=${encodeURIComponent(`/s/${token}`)}`);
-      return;
-    }
-    setBusy(true);
+  const pay = async (body: { participantId?: string; remaining?: boolean }, busyKey: string) => {
+    setBusyId(busyKey);
     setError(null);
     try {
-      const init = await api<{ paymentId: string }>('/payments/init', {
+      const init = await api<{ paymentId: string }>(`/split/${token}/pay`, {
         method: 'POST',
-        body: { bookingId: view.bookingId, participantId: nextShare.id, provider },
+        body: { ...body, provider },
       });
       router.push(`/pay/${init.paymentId}`);
     } catch (e) {
       setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
       load();
     } finally {
-      setBusy(false);
+      setBusyId(null);
     }
   };
 
@@ -94,6 +88,8 @@ export default function SplitScreen() {
 
   const pending = view.status === 'pending_payment';
   const link = splitLink(token ?? '');
+  const remainingTotal = pendingShares.reduce((s, p) => s + p.shareTiyin, 0);
+  const nobodyPaid = view.sharesPaid === 0;
 
   return (
     <Screen title={t('split.title')} back>
@@ -135,9 +131,16 @@ export default function SplitScreen() {
           </Card>
         ) : null}
 
+        {pending ? (
+          <View style={{ gap: tokens.spacing.sm }}>
+            <AppText variant="h3">{t('book.paymentMethod')}</AppText>
+            <ProviderSelect value={provider} onChange={setProvider} />
+          </View>
+        ) : null}
+
         <Card style={{ gap: tokens.spacing.md }}>
           <AppText variant="h3">{t('split.progress', { paid: view.sharesPaid, total: view.sharesTotal })}</AppText>
-          <View style={{ height: 6, backgroundColor: tokens.colors.gray150, borderRadius: 3, overflow: 'hidden' }}>
+          <View style={{ height: 8, backgroundColor: tokens.colors.gray150, overflow: 'hidden' }}>
             <View
               style={{
                 width: `${Math.round((view.sharesPaid / Math.max(view.sharesTotal, 1)) * 100)}%`,
@@ -146,7 +149,7 @@ export default function SplitScreen() {
               }}
             />
           </View>
-          <View style={{ gap: tokens.spacing.sm }}>
+          <View style={{ gap: tokens.spacing.md }}>
             {view.participants.map((p, i) => (
               <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm }}>
                 {p.status === 'paid' ? (
@@ -154,31 +157,38 @@ export default function SplitScreen() {
                 ) : (
                   <Circle size={18} color={tokens.colors.gray300} strokeWidth={1.6} />
                 )}
-                <AppText variant="small" style={{ flex: 1 }}>
-                  {p.isCreator ? t('split.shareCreator') : `#${i + 1}`}
-                  {p.paidByMe ? ' · ' + t('venue.slotYours') : ''}
-                </AppText>
-                <AppText variant="small" color={tokens.colors.gray500}>
-                  {money(p.shareTiyin, locale)}
-                </AppText>
+                <View style={{ flex: 1 }}>
+                  <AppText variant="small" weight="medium">
+                    {p.fullName || `#${i + 1}`}
+                  </AppText>
+                  <AppText variant="tiny" color={tokens.colors.gray500}>
+                    {money(p.shareTiyin, locale)}
+                    {p.isCreator ? ` · ${t('split.shareCreator')}` : ''}
+                  </AppText>
+                </View>
+                {pending && p.status === 'pending' ? (
+                  <Button
+                    title={t('split.payShare')}
+                    small
+                    onPress={() => pay({ participantId: p.id }, p.id)}
+                    loading={busyId === p.id}
+                    disabled={busyId !== null && busyId !== p.id}
+                  />
+                ) : null}
               </View>
             ))}
           </View>
-        </Card>
 
-        {pending && nextShare ? (
-          <View style={{ gap: tokens.spacing.md }}>
-            <Card style={{ gap: tokens.spacing.xs }}>
-              <AppText variant="small" color={tokens.colors.gray500}>
-                {t('split.yourShare')}
-              </AppText>
-              <AppText variant="h2">{money(nextShare.shareTiyin, locale)}</AppText>
-            </Card>
-            <AppText variant="h3">{t('book.paymentMethod')}</AppText>
-            <ProviderSelect value={provider} onChange={setProvider} />
-            <Button title={t('split.payShare')} onPress={payShare} loading={busy} />
-          </View>
-        ) : null}
+          {pending && pendingShares.length > 1 ? (
+            <Button
+              title={`${nobodyPaid ? t('split.payAll') : t('split.payRemaining')} · ${money(remainingTotal, locale)}`}
+              variant="secondary"
+              onPress={() => pay({ remaining: true }, 'remaining')}
+              loading={busyId === 'remaining'}
+              disabled={busyId !== null && busyId !== 'remaining'}
+            />
+          ) : null}
+        </Card>
 
         {pending ? (
           <Card style={{ gap: tokens.spacing.md, alignItems: 'center' }}>

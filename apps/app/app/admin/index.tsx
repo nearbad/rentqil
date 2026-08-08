@@ -45,7 +45,6 @@ export default function AdminHome() {
             <KeyValue label={t('admin.bookingsWeek')} value={String(dash.bookingsWeek)} />
             <KeyValue label={t('admin.gmvWeek')} value={money(dash.gmvWeekTiyin, locale)} />
             <KeyValue label={t('admin.feesWeek')} value={money(dash.serviceFeesWeekTiyin, locale)} />
-            <KeyValue label={t('admin.commissionWeek')} value={money(dash.commissionWeekTiyin, locale)} />
           </Card>
         )}
 

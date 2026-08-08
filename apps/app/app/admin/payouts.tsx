@@ -39,7 +39,7 @@ function PayoutRow({ row, onDone }: { row: AdminPayoutRowView; onDone: () => voi
   return (
     <Card style={{ gap: tokens.spacing.sm }}>
       <AppText weight="medium">
-        {row.ownerName ?? '-'} · {row.ownerPhone}
+        {row.ownerName ?? '-'} · {row.ownerEmail ?? '-'}
       </AppText>
       <KeyValue label={t('owner.financeAccrued')} value={money(row.accruedTiyin, locale)} />
       <KeyValue label={t('owner.financePaidOut')} value={money(row.paidOutTiyin, locale)} />

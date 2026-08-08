@@ -1,8 +1,8 @@
 # rentqil
 
-Online booking for sports venues in Uzbekistan: football pitches, tennis and padel courts, basketball and volleyball halls, gyms. Players find a venue, pick free slots, pay a deposit online and can split the bill with their team through a share link. Owners manage schedules, prices and cancellation policies. The platform takes a per booking service fee and an optional commission.
+Online booking for sports venues in Uzbekistan: football pitches, tennis and padel courts, basketball and volleyball halls, gyms. Players find a venue, pick free slots, pay the full price online and can split the bill with their team through a share link that needs no account. Partners (venue owners) manage schedules, prices, cancellation policies and booking conditions. The platform takes a percent service fee from the player, it is never refunded.
 
-Payments run against a mock provider for now (Click / Payme / Uzum / Paynet / Uzum Nasiya are selectable, real adapter skeletons are in `apps/api/src/payments`), but all the money logic is production grade: deposits, exact split shares, policy driven refunds, idempotent webhooks.
+Payments run against a mock provider for now (Click / Payme / Uzum / Paynet / Uzum Nasiya are selectable, real adapter skeletons are in `apps/api/src/payments`), but all the money logic is production grade: full upfront payments, exact split shares, policy driven refunds, idempotent webhooks. Sign in works by email code or Google, a phone number is only asked at booking time.
 
 ## Stack
 
@@ -33,17 +33,17 @@ cd apps/app
 pnpm dev                        # expo web on :8081
 ```
 
-The seed prints the demo accounts. With `SMS_PROVIDER=mock` and `OTP_DEV_ECHO=1` the login code is echoed in the api response and in the api logs, so no real SMS is needed:
+The seed prints the demo accounts. With `EMAIL_PROVIDER=mock` and `OTP_DEV_ECHO=1` the login code is echoed in the api response and in the api logs, so no real mailbox is needed:
 
-- admin: `+998900000000`
-- demo owner: `+998901112233`
-- demo player: `+998907654321`
+- admin: `admin@rentqil.com` (override with `ADMIN_EMAIL`)
+- demo partner: `owner@rentqil.com`
+- demo player: `player@rentqil.com`
 
 Booking flow end to end: pick a venue, select slots, hit "Rent qil!", choose any payment method, then press "Pay" on the mock payment page. The mock provider fires a signed webhook back at the api exactly like a real PSP would.
 
 ## Tests
 
-Money logic (deposits, split shares, commission, refund math, slot pricing) is covered by unit tests:
+Money logic (quotes, split shares, refund math, slot pricing) is covered by unit tests:
 
 ```bash
 pnpm test
@@ -68,7 +68,9 @@ ACME_EMAIL=you@example.com               # Let's Encrypt expiry notices
 WEB_URL=https://rentqil.com              # public url of the web app
 EXPO_PUBLIC_API_URL=https://api.rentqil.com   # public url of the api, baked into the web bundle
 EXPO_PUBLIC_YANDEX_MAPS_KEY=             # optional, maps fall back to osm without it
-ADMIN_PHONE=+998xxxxxxxxx                # first admin account
+ADMIN_EMAIL=you@example.com              # this email logs in as the platform admin
+GOOGLE_CLIENT_ID=                        # optional, enables "continue with google"
+GOOGLE_CLIENT_SECRET=
 ```
 
 4. Build and start:
@@ -85,12 +87,12 @@ docker compose exec api pnpm exec tsx prisma/seed.ts
 
 Only caddy publishes host ports (80/443), the api and web containers stay on the internal network. To serve everything from one domain instead, route `/` to the web container in the Caddyfile and set `EXPO_PUBLIC_API_URL` to the api path accordingly before building.
 
-Admin login in production: with `SMS_PROVIDER=mock` the OTP code is printed to the api logs, so after opening the login screen run `docker compose logs api --tail 20` and grab the code there. Switch to eskiz once credentials exist.
+Admin login in production: with `EMAIL_PROVIDER=mock` the login code is printed to the api logs, so after entering your email on the login screen run `docker compose logs api --tail 20` and grab the code there. Wire real SMTP (or google oauth keys) to stop reading logs.
 
-To change platform settings (service fee, commission, deposit bounds, timers) log in as the admin and open Admin -> Config. No redeploy needed.
+To change platform settings (service fee percent, timers, calendar depth) log in as the admin and open Admin -> Config. No redeploy needed.
 
 ## Going live with real payments
 
 Each PSP has a skeleton adapter in `apps/api/src/payments` with TODO notes on the protocol (Payme Merchant API, Click prepare/complete, Uzum, Paynet). The plan per provider: sign the contract, fill in the credentials via env, implement the webhook route next to `/webhooks/mock`, then flip `USE_MOCK` in `provider.ts`. Fiscal receipts (OFD) are out of scope for v1, the hook point is right after a payment turns paid.
 
-SMS: `EskizSms` in `apps/api/src/lib/sms.ts` is the stub for eskiz.uz, set `SMS_PROVIDER=eskiz` plus credentials once the sender name is approved.
+Email: `SmtpEmail` in `apps/api/src/lib/email.ts` is the stub for real login emails, set `EMAIL_PROVIDER=smtp` plus SMTP credentials, and remember SPF/DKIM. SMS: `EskizSms` in `apps/api/src/lib/sms.ts` stays as the stub for future booking notifications via eskiz.uz.

@@ -3,48 +3,28 @@
 
 export interface QuoteInput {
   slotPricesTiyin: number[];
-  depositPercent: number;
-  serviceFeeEnabled: boolean;
-  serviceFeeTiyin: number;
+  // percent of the price charged on top as the platform fee, 0 disables
+  serviceFeePercent: number;
 }
 
 export interface Quote {
   totalTiyin: number;
-  depositPercent: number;
-  depositTiyin: number;
   serviceFeeTiyin: number;
   payNowTiyin: number;
-  payAtVenueTiyin: number;
 }
 
+// the whole price is paid online up front, plus the service fee
 export function quoteBooking(input: QuoteInput): Quote {
   const totalTiyin = input.slotPricesTiyin.reduce((sum, p) => sum + p, 0);
-  const depositTiyin = Math.round((totalTiyin * input.depositPercent) / 100);
-  const serviceFeeTiyin = input.serviceFeeEnabled ? input.serviceFeeTiyin : 0;
+  const serviceFeeTiyin = Math.round((totalTiyin * Math.max(input.serviceFeePercent, 0)) / 100);
   return {
     totalTiyin,
-    depositPercent: input.depositPercent,
-    depositTiyin,
     serviceFeeTiyin,
-    payNowTiyin: depositTiyin + serviceFeeTiyin,
-    payAtVenueTiyin: totalTiyin - depositTiyin,
+    payNowTiyin: totalTiyin + serviceFeeTiyin,
   };
 }
 
 export { splitEven } from '@rentqil/shared';
-
-// commission is taken from the money the platform actually holds,
-// so it is a percent of the full price capped by the deposit
-export function commissionFor(
-  totalTiyin: number,
-  depositTiyin: number,
-  percent: number,
-  enabled: boolean
-): number {
-  if (!enabled || percent <= 0) return 0;
-  const raw = Math.round((totalTiyin * percent) / 100);
-  return Math.min(raw, depositTiyin);
-}
 
 // distribute a refund total across paid payments proportionally,
 // result sums exactly to refundTiyin and never exceeds any single payment
@@ -84,23 +64,23 @@ export interface RefundQuote {
   reason: 'free_window' | 'late' | 'no_refund' | 'nothing_paid';
 }
 
-// player initiated cancellation
-// inside the free window everything paid online comes back,
-// late cancellation returns a percent of the deposit only, the service fee stays
+// player initiated cancellation of a confirmed booking.
+// the service fee never comes back, so the refund base is the price only:
+// inside the free window the full price returns, a late cancellation
+// returns the policy percent of the price
 export function refundForCancellation(args: {
   policy: RefundPolicyInput;
   hoursToStart: number;
-  depositTiyin: number;
-  serviceFeeTiyin: number;
+  totalTiyin: number;
   paidTiyin: number;
 }): RefundQuote {
-  const { policy, hoursToStart, depositTiyin, serviceFeeTiyin, paidTiyin } = args;
+  const { policy, hoursToStart, totalTiyin, paidTiyin } = args;
   if (paidTiyin <= 0) return { refundTiyin: 0, reason: 'nothing_paid' };
   if (!policy.refundEnabled) return { refundTiyin: 0, reason: 'no_refund' };
 
   if (hoursToStart >= policy.freeCancelHours) {
-    return { refundTiyin: Math.min(paidTiyin, depositTiyin + serviceFeeTiyin), reason: 'free_window' };
+    return { refundTiyin: Math.min(paidTiyin, totalTiyin), reason: 'free_window' };
   }
-  const late = Math.round((depositTiyin * policy.lateRefundPercent) / 100);
+  const late = Math.round((totalTiyin * policy.lateRefundPercent) / 100);
   return { refundTiyin: Math.min(late, paidTiyin), reason: 'late' };
 }

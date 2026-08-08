@@ -8,6 +8,7 @@ import { parse } from '../lib/validate';
 export function meView(user: User, application: OwnerApplication | null): MeView {
   return {
     id: user.id,
+    email: user.email,
     phone: user.phone,
     name: user.name,
     role: user.role,

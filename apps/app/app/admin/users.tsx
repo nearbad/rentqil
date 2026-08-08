@@ -13,7 +13,8 @@ import { Badge, Card, Divider, Loading } from '@/ui/bits';
 
 interface ApplicationRow {
   userId: string;
-  phone: string;
+  email: string | null;
+  phone: string | null;
   name: string | null;
   message: string | null;
   createdAt: string;
@@ -44,7 +45,7 @@ function Applications() {
       {items.map((a) => (
         <Card key={a.userId} style={{ gap: tokens.spacing.sm }}>
           <AppText weight="medium">
-            {a.name ?? '-'} · {a.phone}
+            {a.name ?? '-'} · {a.email ?? a.phone ?? '-'}
           </AppText>
           {a.message ? (
             <AppText variant="small" color={tokens.colors.gray500}>
@@ -107,7 +108,7 @@ export default function AdminUsersScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm }}>
                   <View style={{ flex: 1 }}>
                     <AppText weight="medium">
-                      {user.name ?? '-'} · {user.phone}
+                      {user.name ?? '-'} · {user.email ?? user.phone ?? '-'}
                     </AppText>
                     <AppText variant="tiny" color={tokens.colors.gray500}>
                       {user.role} · {t('owner.statsBookings').toLowerCase()}: {user.bookingsCount}

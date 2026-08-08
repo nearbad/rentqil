@@ -6,21 +6,24 @@ export const phoneSchema = z
   .trim()
   .regex(/^\+998\d{9}$/, 'expected +998XXXXXXXXX');
 
+export const emailSchema = z.string().trim().toLowerCase().email().max(120);
+
 export const ymdSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
 
 const hourSchema = z.number().int().min(0).max(24);
 
 export const otpRequestSchema = z.object({
-  phone: phoneSchema,
+  email: emailSchema,
 });
 
 export const otpVerifySchema = z.object({
-  phone: phoneSchema,
+  email: emailSchema,
   code: z.string().trim().regex(/^\d{6}$/),
 });
 
 export const updateMeSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
+  phone: phoneSchema.optional(),
   locale: z.enum(LOCALES).optional(),
 });
 
@@ -70,13 +73,28 @@ export const createBookingSchema = z
     date: ymdSchema,
     startHour: hourSchema,
     endHour: hourSchema,
+    // who answers for this booking at the venue
+    contactPhone: phoneSchema,
     split: z
       .object({
-        participants: z.number().int().min(2).max(30),
+        // full name of every player, the creator included
+        names: z.array(z.string().trim().min(2).max(80)).min(2).max(30),
       })
       .optional(),
   })
   .refine((b) => b.endHour > b.startHour, { message: 'endHour must be after startHour' });
+
+// public payment start from the split page, no auth needed
+export const splitPayInitSchema = z
+  .object({
+    provider: z.enum(PAYMENT_PROVIDERS.map((p) => p.id) as [string, ...string[]]),
+    participantId: z.string().min(1).optional(),
+    // pay every share that is still pending in one payment
+    remaining: z.boolean().optional(),
+  })
+  .refine((b) => Boolean(b.participantId) !== Boolean(b.remaining), {
+    message: 'pass either participantId or remaining',
+  });
 
 export const paymentInitSchema = z.object({
   bookingId: z.string().min(1),
@@ -108,7 +126,9 @@ export const venueUpsertSchema = z.object({
   lng: z.number().min(-180).max(180),
   photos: z.array(z.string().url()).max(10).default([]),
   amenities: z.array(z.enum(AMENITIES)).default([]),
-  depositPercent: z.number().int().min(0).max(100).optional(),
+  requireNames: z.boolean().default(false),
+  requireDocuments: z.boolean().default(false),
+  terms: z.string().trim().max(2000).default(''),
 });
 
 export const policySchema = z.object({
@@ -169,21 +189,11 @@ export const moderationDecisionSchema = z.object({
 });
 
 export const adminConfigSchema = z.object({
-  serviceFeeEnabled: z.boolean().optional(),
-  serviceFeeTiyin: z.number().int().min(0).optional(),
-  commissionEnabled: z.boolean().optional(),
-  commissionPercent: z.number().int().min(0).max(100).optional(),
-  defaultDepositPercent: z.number().int().min(0).max(100).optional(),
-  minDepositPercent: z.number().int().min(0).max(100).optional(),
-  maxDepositPercent: z.number().int().min(0).max(100).optional(),
+  serviceFeePercent: z.number().int().min(0).max(100).optional(),
   bookingTtlMinutes: z.number().int().min(1).max(120).optional(),
   splitTtlMinutes: z.number().int().min(5).max(24 * 60).optional(),
   calendarDays: z.number().int().min(1).max(30).optional(),
   reminderHours: z.number().int().min(1).max(48).optional(),
-});
-
-export const adminVenueCommissionSchema = z.object({
-  commissionPercent: z.number().int().min(0).max(100).nullable(),
 });
 
 export const adminPayoutSchema = z.object({

@@ -69,7 +69,11 @@ enum PaymentProviderKind {
 
 model User {
   id        String    @id @default(cuid())
-  phone     String    @unique
+  // login identity: email otp or google oauth
+  email     String?   @unique
+  googleId  String?   @unique
+  // optional contact, also filled from the first booking
+  phone     String?   @unique
   name      String?
   role      Role      @default(user)
   locale    Locale    @default(uz)
@@ -98,14 +102,15 @@ model OwnerApplication {
 
 model OtpCode {
   id         String    @id @default(cuid())
-  phone      String
+  // email the code was sent to
+  identifier String
   codeHash   String
   attempts   Int       @default(0)
   expiresAt  DateTime
   consumedAt DateTime?
   createdAt  DateTime  @default(now())
 
-  @@index([phone, createdAt])
+  @@index([identifier, createdAt])
 }
 
 model Venue {
@@ -127,10 +132,10 @@ model Venue {
   // critical field edits wait here for admin approval while the venue keeps
   // serving the last approved data
   pendingChanges    Json?
-  // null means platform default
-  depositPercent    Int?
-  // admin controlled per venue override, null means global setting
-  commissionPercent Int?
+  // player facing conditions, the owner sets them freely
+  requireNames      Boolean     @default(false)
+  requireDocuments  Boolean     @default(false)
+  terms             String      @default("")
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -232,11 +237,11 @@ model Booking {
   status    BookingStatus @default(pending_payment)
 
   // money snapshot at creation time, integer tiyin
+  // the full price is paid online, plus a non refundable service fee
   totalTiyin      Int
-  depositPercent  Int
-  depositTiyin    Int
   serviceFeeTiyin Int
-  commissionTiyin Int
+  // phone of the person responsible for the booking
+  contactPhone    String @default("")
 
   isSplit    Boolean   @default(false)
   splitToken String?   @unique
@@ -262,7 +267,9 @@ model BookingParticipant {
   id         String            @id @default(cuid())
   bookingId  String
   booking    Booking           @relation(fields: [bookingId], references: [id])
-  // set when someone pays this share, shares are positional
+  // entered by the booking creator, one per player
+  fullName   String            @default("")
+  // set when a logged in user pays this share, guests leave it null
   userId     String?
   user       User?             @relation(fields: [userId], references: [id])
   shareTiyin Int
@@ -291,6 +298,8 @@ model Payment {
   // who initiated the payment, matters for split shares paid "for a friend"
   payerUserId    String?
   payer          User?               @relation(fields: [payerUserId], references: [id])
+  // the pending shares a single "pay for the rest" payment closes
+  coversParticipantIds String[] @default([])
   // for refunds, points at the payment being refunded
   refundOfId     String?
   refundOf       Payment?            @relation("Refunds", fields: [refundOfId], references: [id])
@@ -306,13 +315,8 @@ model Payment {
 // single row, id is always 1
 model PlatformConfig {
   id                    Int      @id @default(1)
-  serviceFeeEnabled     Boolean  @default(true)
-  serviceFeeTiyin       Int      @default(500000)
-  commissionEnabled     Boolean  @default(false)
-  commissionPercent     Int      @default(10)
-  defaultDepositPercent Int      @default(30)
-  minDepositPercent     Int      @default(10)
-  maxDepositPercent     Int      @default(100)
+  // percent of the booking price charged on top, never refunded, 0 disables
+  serviceFeePercent     Int      @default(10)
   bookingTtlMinutes     Int      @default(15)
   splitTtlMinutes       Int      @default(60)
   calendarDays          Int      @default(7)

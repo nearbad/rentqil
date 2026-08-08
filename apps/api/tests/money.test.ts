@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   allocateProportional,
-  commissionFor,
   quoteBooking,
   refundForCancellation,
   splitEven,
@@ -10,41 +9,32 @@ import {
 // amounts are integer tiyin, 100 tiyin = 1 som
 
 describe('quoteBooking', () => {
-  it('sums slots and takes the deposit percent', () => {
+  it('sums slots and adds the percent service fee', () => {
     const q = quoteBooking({
       slotPricesTiyin: [35_000_000, 35_000_000, 45_000_000],
-      depositPercent: 30,
-      serviceFeeEnabled: true,
-      serviceFeeTiyin: 500_000,
+      serviceFeePercent: 10,
     });
     expect(q.totalTiyin).toBe(115_000_000);
-    expect(q.depositTiyin).toBe(34_500_000);
-    expect(q.serviceFeeTiyin).toBe(500_000);
-    expect(q.payNowTiyin).toBe(35_000_000);
-    expect(q.payAtVenueTiyin).toBe(80_500_000);
+    expect(q.serviceFeeTiyin).toBe(11_500_000);
+    expect(q.payNowTiyin).toBe(126_500_000);
   });
 
-  it('drops the fee when disabled', () => {
-    const q = quoteBooking({
-      slotPricesTiyin: [10_000_000],
-      depositPercent: 50,
-      serviceFeeEnabled: false,
-      serviceFeeTiyin: 500_000,
-    });
+  it('zero percent means no fee', () => {
+    const q = quoteBooking({ slotPricesTiyin: [10_000_000], serviceFeePercent: 0 });
     expect(q.serviceFeeTiyin).toBe(0);
-    expect(q.payNowTiyin).toBe(5_000_000);
+    expect(q.payNowTiyin).toBe(10_000_000);
   });
 
-  it('rounds the deposit to whole tiyin', () => {
-    const q = quoteBooking({
-      slotPricesTiyin: [10_000_001],
-      depositPercent: 30,
-      serviceFeeEnabled: false,
-      serviceFeeTiyin: 0,
-    });
-    // 3000000.3 rounds down
-    expect(q.depositTiyin).toBe(3_000_000);
-    expect(q.depositTiyin + q.payAtVenueTiyin).toBe(q.totalTiyin);
+  it('rounds the fee to whole tiyin', () => {
+    const q = quoteBooking({ slotPricesTiyin: [10_000_001], serviceFeePercent: 10 });
+    // 1000000.1 rounds down
+    expect(q.serviceFeeTiyin).toBe(1_000_000);
+    expect(q.payNowTiyin).toBe(q.totalTiyin + q.serviceFeeTiyin);
+  });
+
+  it('a negative percent never produces a negative fee', () => {
+    const q = quoteBooking({ slotPricesTiyin: [10_000_000], serviceFeePercent: -5 });
+    expect(q.serviceFeeTiyin).toBe(0);
   });
 });
 
@@ -80,25 +70,6 @@ describe('splitEven', () => {
   });
 });
 
-describe('commissionFor', () => {
-  it('is zero when disabled', () => {
-    expect(commissionFor(100_000_000, 30_000_000, 10, false)).toBe(0);
-  });
-
-  it('takes the percent of the full price', () => {
-    expect(commissionFor(100_000_000, 30_000_000, 10, true)).toBe(10_000_000);
-  });
-
-  it('never exceeds the deposit we actually hold', () => {
-    // 20% of full price is 20M but the deposit is only 15M
-    expect(commissionFor(100_000_000, 15_000_000, 20, true)).toBe(15_000_000);
-  });
-
-  it('handles zero percent', () => {
-    expect(commissionFor(100_000_000, 30_000_000, 0, true)).toBe(0);
-  });
-});
-
 describe('allocateProportional', () => {
   it('splits a refund across payments proportionally and exactly', () => {
     const parts = allocateProportional(5_000_000, [6_000_000, 4_000_000]);
@@ -129,12 +100,13 @@ describe('allocateProportional', () => {
 });
 
 describe('refundForCancellation', () => {
+  // full price paid online plus a 10% fee that never comes back
   const policy = { refundEnabled: true, freeCancelHours: 12, lateRefundPercent: 50 };
-  const base = { depositTiyin: 27_000_000, serviceFeeTiyin: 500_000, paidTiyin: 27_500_000 };
+  const base = { totalTiyin: 90_000_000, paidTiyin: 99_000_000 };
 
-  it('free window returns everything paid', () => {
+  it('free window returns the price but keeps the fee', () => {
     const r = refundForCancellation({ policy, hoursToStart: 28, ...base });
-    expect(r).toEqual({ refundTiyin: 27_500_000, reason: 'free_window' });
+    expect(r).toEqual({ refundTiyin: 90_000_000, reason: 'free_window' });
   });
 
   it('the window boundary still counts as free', () => {
@@ -142,20 +114,29 @@ describe('refundForCancellation', () => {
     expect(r.reason).toBe('free_window');
   });
 
-  it('late cancellation returns the percent of the deposit only', () => {
+  it('late cancellation returns the policy percent of the price', () => {
     const r = refundForCancellation({ policy, hoursToStart: 3, ...base });
-    expect(r).toEqual({ refundTiyin: 13_500_000, reason: 'late' });
+    expect(r).toEqual({ refundTiyin: 45_000_000, reason: 'late' });
   });
 
   it('late refund never exceeds what was actually paid', () => {
     const r = refundForCancellation({
       policy: { ...policy, lateRefundPercent: 100 },
       hoursToStart: 3,
-      depositTiyin: 27_000_000,
-      serviceFeeTiyin: 500_000,
+      totalTiyin: 90_000_000,
       paidTiyin: 10_000_000,
     });
     expect(r.refundTiyin).toBe(10_000_000);
+  });
+
+  it('the free window refund is capped by the paid amount too', () => {
+    const r = refundForCancellation({
+      policy,
+      hoursToStart: 48,
+      totalTiyin: 90_000_000,
+      paidTiyin: 40_000_000,
+    });
+    expect(r.refundTiyin).toBe(40_000_000);
   });
 
   it('no refund policy returns zero', () => {
@@ -172,7 +153,7 @@ describe('refundForCancellation', () => {
     expect(r).toEqual({ refundTiyin: 0, reason: 'nothing_paid' });
   });
 
-  it('zero percent late policy keeps the whole deposit', () => {
+  it('zero percent late policy keeps everything', () => {
     const r = refundForCancellation({
       policy: { refundEnabled: true, freeCancelHours: 24, lateRefundPercent: 0 },
       hoursToStart: 5,

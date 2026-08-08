@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
+import { hardShadow } from './shadow';
 
 interface Props {
   renderTrigger: (open: () => void) => React.ReactNode;
@@ -55,11 +56,11 @@ export function Popover({ renderTrigger, children, menuWidth = 260, align = 'lef
                 left: pos.left,
                 width: menuWidth,
                 backgroundColor: tokens.colors.white,
-                borderWidth: 1,
-                borderColor: tokens.colors.gray150,
-                borderRadius: tokens.radius.md,
+                borderWidth: tokens.border,
+                borderColor: tokens.colors.text,
                 maxHeight: 380,
                 overflow: 'hidden',
+                ...hardShadow('md'),
               }}
             >
               <ScrollView contentContainerStyle={{ padding: tokens.spacing.xs }}>{children(close)}</ScrollView>

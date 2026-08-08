@@ -38,6 +38,7 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const [name, setName] = useState(me?.name ?? '');
+  const [phone, setPhone] = useState(me?.phone ?? '+998');
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -58,7 +59,14 @@ export default function ProfileScreen() {
     if (!me) return;
     setSaving(true);
     try {
-      await api<MeView>('/me', { method: 'PATCH', body: { name: name.trim() } });
+      const cleanPhone = phone.replace(/[\s-]/g, '');
+      await api<MeView>('/me', {
+        method: 'PATCH',
+        body: {
+          name: name.trim() || undefined,
+          ...(/^\+998\d{9}$/.test(cleanPhone) ? { phone: cleanPhone } : {}),
+        },
+      });
       await refresh();
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 1500);
@@ -100,10 +108,11 @@ export default function ProfileScreen() {
   return (
     <Screen title={t('profile.title')}>
       <View style={{ gap: tokens.spacing.lg, paddingTop: tokens.spacing.md }}>
-        <AppText variant="h3">{me.phone}</AppText>
+        <AppText variant="h3">{me.email ?? me.phone}</AppText>
 
         <View style={{ gap: tokens.spacing.sm }}>
           <Input label={t('profile.name')} value={name} onChangeText={setName} />
+          <Input label={t('profile.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
           <Button
             title={savedFlash ? t('profile.saved') : t('common.save')}
             onPress={saveName}

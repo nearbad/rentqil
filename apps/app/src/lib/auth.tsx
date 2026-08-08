@@ -9,6 +9,8 @@ interface AuthContextValue {
   me: MeView | null;
   loading: boolean;
   setSession: (token: string, me: MeView) => Promise<void>;
+  // google redirect hands us just a token, /me completes the session
+  loginWithToken: (token: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -17,6 +19,7 @@ const AuthContext = createContext<AuthContextValue>({
   me: null,
   loading: true,
   setSession: async () => {},
+  loginWithToken: async () => {},
   refresh: async () => {},
   logout: async () => {},
 });
@@ -50,6 +53,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMe(nextMe);
   }, []);
 
+  const loginWithToken = useCallback(async (token: string) => {
+    setAuthToken(token);
+    const current = await api<MeView>('/me');
+    await AsyncStorage.setItem(TOKEN_KEY, token);
+    setMe(current);
+  }, []);
+
   const refresh = useCallback(async () => {
     try {
       setMe(await api<MeView>('/me'));
@@ -65,8 +75,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ me, loading, setSession, refresh, logout }),
-    [me, loading, setSession, refresh, logout]
+    () => ({ me, loading, setSession, loginWithToken, refresh, logout }),
+    [me, loading, setSession, loginWithToken, refresh, logout]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

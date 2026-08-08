@@ -5,6 +5,7 @@ import { prisma } from '../lib/db';
 import { parse } from '../lib/validate';
 import { errors } from '../lib/errors';
 import { getPlatformConfig } from './../services/config.service';
+import { config as env } from '../config';
 import {
   busyRanges,
   courtAvailability,
@@ -116,13 +117,8 @@ export async function catalogRoutes(app: FastifyInstance) {
   app.get('/config', async () => {
     const c = await getPlatformConfig();
     const view: PlatformConfigView = {
-      serviceFeeEnabled: c.serviceFeeEnabled,
-      serviceFeeTiyin: c.serviceFeeTiyin,
-      commissionEnabled: c.commissionEnabled,
-      commissionPercent: c.commissionPercent,
-      defaultDepositPercent: c.defaultDepositPercent,
-      minDepositPercent: c.minDepositPercent,
-      maxDepositPercent: c.maxDepositPercent,
+      serviceFeePercent: c.serviceFeePercent,
+      googleAuthEnabled: Boolean(env.google.clientId && env.google.clientSecret),
       bookingTtlMinutes: c.bookingTtlMinutes,
       splitTtlMinutes: c.splitTtlMinutes,
       calendarDays: c.calendarDays,

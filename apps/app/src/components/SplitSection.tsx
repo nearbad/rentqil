@@ -40,7 +40,7 @@ export function SplitSection({ booking, onChanged }: { booking: BookingView; onC
         {t('split.progress', { paid, total })}
       </AppText>
 
-      <View style={{ height: 6, backgroundColor: tokens.colors.gray150, borderRadius: 3, overflow: 'hidden' }}>
+      <View style={{ height: 8, backgroundColor: tokens.colors.gray150, overflow: 'hidden' }}>
         <View
           style={{
             width: `${Math.round((paid / Math.max(total, 1)) * 100)}%`,
@@ -59,8 +59,8 @@ export function SplitSection({ booking, onChanged }: { booking: BookingView; onC
               <Circle size={18} color={tokens.colors.gray300} strokeWidth={1.6} />
             )}
             <AppText variant="small" style={{ flex: 1 }}>
-              {p.isCreator ? t('split.shareCreator') : `#${i + 1}`}
-              {p.paidByMe && !p.isCreator ? ' · ' + t('venue.slotYours') : ''}
+              {p.fullName || `#${i + 1}`}
+              {p.isCreator ? ' · ' + t('split.shareCreator') : ''}
             </AppText>
             <AppText variant="small" color={tokens.colors.gray500}>
               {money(p.shareTiyin, locale)}

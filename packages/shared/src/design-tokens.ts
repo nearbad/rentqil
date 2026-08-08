@@ -1,4 +1,4 @@
-// black on white, no shadows, no gradients
+// brutalist black on white: zero radius, thick borders, hard offset shadows
 // keep every visual constant here, components must not invent colors
 
 export const colors = {
@@ -46,11 +46,19 @@ export const spacing = {
   xxl: 32,
 } as const;
 
+// brutalism: everything is a sharp rectangle
 export const radius = {
-  sm: 6,
-  md: 8,
-  lg: 12,
+  sm: 0,
+  md: 0,
+  lg: 0,
 } as const;
+
+// thick borders are the core of the style
+export const border = 2;
+
+// hard offset shadows, web only (native ignores them)
+export const shadow = '4px 4px 0 0 #0A0A0A';
+export const shadowSm = '3px 3px 0 0 #0A0A0A';
 
 // forms and reading columns stay narrow, catalog style pages go wide
 export const maxContentWidth = 560;

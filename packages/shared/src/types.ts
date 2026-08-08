@@ -8,7 +8,8 @@ export interface ApiError {
 
 export interface MeView {
   id: string;
-  phone: string;
+  email: string | null;
+  phone: string | null;
   name: string | null;
   role: Role;
   locale: Locale;
@@ -60,6 +61,10 @@ export interface CourtView {
 export interface VenueDetailView extends VenueCardView {
   description: string;
   courts: CourtView[];
+  // player facing conditions set by the owner
+  requireNames: boolean;
+  requireDocuments: boolean;
+  terms: string;
 }
 
 export type SlotState = 'free' | 'busy' | 'yours';
@@ -75,13 +80,11 @@ export interface DayAvailabilityView {
   slots: SlotView[];
 }
 
+// the full price is paid online plus a non refundable service fee
 export interface BookingQuoteView {
   totalTiyin: number;
-  depositPercent: number;
-  depositTiyin: number;
   serviceFeeTiyin: number;
   payNowTiyin: number;
-  payAtVenueTiyin: number;
 }
 
 export interface BookingQuoteResponse extends BookingQuoteView {
@@ -94,10 +97,12 @@ export interface BookingQuoteResponse extends BookingQuoteView {
   holdMinutes: number;
   splitHoldMinutes: number;
   policyBadge: PolicyBadge;
+  requireNames: boolean;
 }
 
 export interface ParticipantView {
   id: string;
+  fullName: string;
   shareTiyin: number;
   status: 'pending' | 'paid' | 'refunded';
   isCreator: boolean;
@@ -117,9 +122,9 @@ export interface BookingView {
   startHour: number;
   endHour: number;
   totalTiyin: number;
-  depositTiyin: number;
   serviceFeeTiyin: number;
   payNowTiyin: number;
+  contactPhone: string;
   isSplit: boolean;
   splitToken: string | null;
   participants: ParticipantView[];
@@ -161,13 +166,9 @@ export interface PaymentPublicView {
 }
 
 export interface PlatformConfigView {
-  serviceFeeEnabled: boolean;
-  serviceFeeTiyin: number;
-  commissionEnabled: boolean;
-  commissionPercent: number;
-  defaultDepositPercent: number;
-  minDepositPercent: number;
-  maxDepositPercent: number;
+  serviceFeePercent: number;
+  // tells the login screen whether to show the google button
+  googleAuthEnabled: boolean;
   bookingTtlMinutes: number;
   splitTtlMinutes: number;
   calendarDays: number;
@@ -212,18 +213,16 @@ export interface OwnerVenueView extends VenueDetailView {
   status: 'pending' | 'approved' | 'rejected';
   moderationComment: string | null;
   hasPendingChanges: boolean;
-  depositPercent: number;
   policy: { refundEnabled: boolean; freeCancelHours: number; lateRefundPercent: number };
 }
 
 export interface OwnerBookingView extends BookingView {
   creatorName: string | null;
-  creatorPhone: string;
+  creatorEmail: string | null;
 }
 
 export interface OwnerFinanceView {
   completedGrossTiyin: number;
-  commissionHeldTiyin: number;
   accruedTiyin: number;
   paidOutTiyin: number;
   payableTiyin: number;
@@ -249,13 +248,13 @@ export interface AdminDashboardView {
   bookingsWeek: number;
   gmvWeekTiyin: number;
   serviceFeesWeekTiyin: number;
-  commissionWeekTiyin: number;
   topVenues: { venueId: string; name: string; bookings: number; gmvTiyin: number }[];
 }
 
 export interface AdminUserView {
   id: string;
-  phone: string;
+  email: string | null;
+  phone: string | null;
   name: string | null;
   role: Role;
   blocked: boolean;
@@ -267,7 +266,7 @@ export interface AdminUserView {
 export interface ModerationItemView {
   venueId: string;
   venueName: string;
-  ownerPhone: string;
+  ownerEmail: string | null;
   kind: 'new' | 'edit';
   submittedAt: string;
   current: Record<string, unknown> | null;
@@ -280,14 +279,14 @@ export interface AdminPaymentRowView {
   type: 'deposit' | 'split_share' | 'refund';
   status: 'created' | 'paid' | 'failed' | 'refunded';
   amountTiyin: number;
-  payerPhone: string | null;
+  payerEmail: string | null;
   createdAt: string;
 }
 
 export interface AdminPayoutRowView {
   ownerId: string;
   ownerName: string | null;
-  ownerPhone: string;
+  ownerEmail: string | null;
   accruedTiyin: number;
   paidOutTiyin: number;
   payableTiyin: number;

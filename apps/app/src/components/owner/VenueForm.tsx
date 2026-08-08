@@ -9,15 +9,15 @@ import { Button } from '@/ui/Button';
 import { Input } from '@/ui/Input';
 import { Chip, ErrorBox } from '@/ui/bits';
 import { Select } from '@/ui/Select';
+import { Toggle } from '@/ui/Toggle';
 import { MapPicker } from '@/components/MapPicker';
 
 interface Props {
   initial?: OwnerVenueView;
-  depositBounds?: { min: number; max: number };
   onSaved: (venue: OwnerVenueView) => void;
 }
 
-export function VenueForm({ initial, depositBounds, onSaved }: Props) {
+export function VenueForm({ initial, onSaved }: Props) {
   const { t } = useI18n();
 
   const [name, setName] = useState(initial?.name ?? '');
@@ -29,7 +29,9 @@ export function VenueForm({ initial, depositBounds, onSaved }: Props) {
   const [lng, setLng] = useState(initial ? String(initial.lng) : '69.2797');
   const [photos, setPhotos] = useState(initial?.photos.join('\n') ?? '');
   const [amenities, setAmenities] = useState<Amenity[]>(initial?.amenities ?? []);
-  const [deposit, setDeposit] = useState(initial ? String(initial.depositPercent) : '30');
+  const [requireNames, setRequireNames] = useState(initial?.requireNames ?? false);
+  const [requireDocuments, setRequireDocuments] = useState(initial?.requireDocuments ?? false);
+  const [terms, setTerms] = useState(initial?.terms ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +55,9 @@ export function VenueForm({ initial, depositBounds, onSaved }: Props) {
           .map((p) => p.trim())
           .filter(Boolean),
         amenities,
-        depositPercent: parseInt(deposit, 10) || undefined,
+        requireNames,
+        requireDocuments,
+        terms: terms.trim(),
       };
       const venue = initial
         ? await api<OwnerVenueView>(`/owner/venues/${initial.id}`, { method: 'PATCH', body })
@@ -129,19 +133,20 @@ export function VenueForm({ initial, depositBounds, onSaved }: Props) {
           ))}
         </View>
       </View>
-      <View style={{ gap: tokens.spacing.xs }}>
+      <View style={{ gap: tokens.spacing.md }}>
+        <AppText variant="small" color={tokens.colors.gray500}>
+          {t('owner.conditions')}
+        </AppText>
+        <Toggle label={t('owner.requireNames')} value={requireNames} onChange={setRequireNames} />
+        <Toggle label={t('owner.requireDocuments')} value={requireDocuments} onChange={setRequireDocuments} />
         <Input
-          label={t('owner.depositPercent')}
-          value={deposit}
-          onChangeText={setDeposit}
-          keyboardType="number-pad"
-          maxLength={3}
+          label={t('owner.terms')}
+          value={terms}
+          onChangeText={setTerms}
+          multiline
+          style={{ minHeight: 80 }}
+          placeholder={t('owner.termsHint')}
         />
-        {depositBounds ? (
-          <AppText variant="tiny" color={tokens.colors.gray500}>
-            {t('owner.depositRange', { min: depositBounds.min, max: depositBounds.max })}
-          </AppText>
-        ) : null}
       </View>
       <Button title={t('owner.sendToModeration')} onPress={submit} loading={busy} />
     </View>

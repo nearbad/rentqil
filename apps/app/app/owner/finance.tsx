@@ -33,7 +33,6 @@ export default function OwnerFinanceScreen() {
       <View style={{ gap: tokens.spacing.lg }}>
         <Card style={{ gap: tokens.spacing.sm }}>
           <KeyValue label={t('owner.financeGross')} value={money(finance.completedGrossTiyin, locale)} />
-          <KeyValue label={t('owner.financeCommission')} value={`-${money(finance.commissionHeldTiyin, locale)}`} />
           <Divider />
           <KeyValue label={t('owner.financeAccrued')} value={money(finance.accruedTiyin, locale)} />
           <KeyValue label={t('owner.financePaidOut')} value={money(finance.paidOutTiyin, locale)} />

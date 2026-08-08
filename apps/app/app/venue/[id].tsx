@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { DoorOpen, Lightbulb, MapPin, ShowerHead, SquareParking, Users } from 'lucide-react-native';
+import { DoorOpen, FileText, IdCard, Lightbulb, MapPin, ShowerHead, SquareParking, Users } from 'lucide-react-native';
 import type { Amenity, DayAvailabilityView, VenueDetailView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
@@ -171,6 +171,33 @@ export default function VenueScreen() {
               );
             })}
           </View>
+        </View>
+      ) : null}
+
+      {venue.requireNames || venue.requireDocuments || venue.terms ? (
+        <View style={{ gap: tokens.spacing.sm }}>
+          <AppText variant="h3">{t('venue.conditions')}</AppText>
+          {venue.requireNames ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <IdCard size={16} color={tokens.colors.gray700} strokeWidth={1.6} />
+              <AppText variant="small" color={tokens.colors.gray700}>
+                {t('venue.namesRequired')}
+              </AppText>
+            </View>
+          ) : null}
+          {venue.requireDocuments ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <FileText size={16} color={tokens.colors.gray700} strokeWidth={1.6} />
+              <AppText variant="small" color={tokens.colors.gray700}>
+                {t('venue.documentsRequired')}
+              </AppText>
+            </View>
+          ) : null}
+          {venue.terms ? (
+            <AppText variant="small" color={tokens.colors.gray700}>
+              {venue.terms}
+            </AppText>
+          ) : null}
         </View>
       ) : null}
 

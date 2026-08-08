@@ -8,6 +8,7 @@ import { useI18n } from '@/lib/i18n';
 import { useSports } from '@/lib/sports';
 import { money } from '@/lib/format';
 import { AppText } from '@/ui/AppText';
+import { hardShadow } from '@/ui/shadow';
 import { Chip } from '@/ui/bits';
 import { PolicyBadgeView } from './PolicyBadgeView';
 import { SportIcon } from './SportIcon';
@@ -22,12 +23,11 @@ export function VenueCard({ venue }: { venue: VenueCardView }) {
     <Pressable
       onPress={() => router.push(`/venue/${venue.id}`)}
       style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => ({
-        borderWidth: 1,
-        borderColor: hovered ? tokens.colors.gray300 : tokens.colors.gray150,
-        borderRadius: tokens.radius.lg,
+        borderWidth: tokens.border,
+        borderColor: tokens.colors.text,
         overflow: 'hidden',
-        opacity: pressed ? 0.9 : 1,
         backgroundColor: tokens.colors.white,
+        ...(pressed ? { transform: [{ translateX: 2 }, { translateY: 2 }] } : hardShadow(hovered ? 'md' : 'sm')),
       })}
     >
       {photo ? (

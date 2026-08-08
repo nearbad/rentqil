@@ -32,9 +32,14 @@ services:
       WEB_URL: ${WEB_URL:?set WEB_URL in .env}
       # the mock psp posts webhooks back to the api itself
       API_URL: http://localhost:3001
+      # browser reachable api url, google oauth redirects go through it
+      PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:?set EXPO_PUBLIC_API_URL in .env}
       SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-mock}
       MOCK_WEBHOOK_SECRET: ${MOCK_WEBHOOK_SECRET:?set MOCK_WEBHOOK_SECRET in .env}
-      ADMIN_PHONE: ${ADMIN_PHONE:-+998900000000}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL in .env}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       ESKIZ_EMAIL: ${ESKIZ_EMAIL:-}
       ESKIZ_PASSWORD: ${ESKIZ_PASSWORD:-}
     expose:

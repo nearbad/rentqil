@@ -16,7 +16,6 @@ import type { Prisma } from '../lib/db';
 import { parse } from '../lib/validate';
 import { errors } from '../lib/errors';
 import { notifier } from '../lib/notifier';
-import { getPlatformConfig } from '../services/config.service';
 import { venueInclude } from '../services/venue.service';
 import { ownerFinance, ownerStats, ownerVenueView } from '../services/owner.service';
 import { bookingView } from '../services/booking.service';
@@ -76,13 +75,6 @@ export async function ownerRoutes(app: FastifyInstance) {
 
   app.post('/owner/venues', ownerOnly, async (req) => {
     const body = parse(venueUpsertSchema, req.body);
-    const config = await getPlatformConfig();
-    if (
-      body.depositPercent !== undefined &&
-      (body.depositPercent < config.minDepositPercent || body.depositPercent > config.maxDepositPercent)
-    ) {
-      throw errors.depositRange();
-    }
     const venue = await prisma.venue.create({
       data: {
         ownerId: req.user!.id,
@@ -95,7 +87,9 @@ export async function ownerRoutes(app: FastifyInstance) {
         lng: body.lng,
         photos: body.photos,
         amenities: body.amenities,
-        depositPercent: body.depositPercent ?? null,
+        requireNames: body.requireNames,
+        requireDocuments: body.requireDocuments,
+        terms: body.terms,
         status: 'pending',
         policy: { create: {} },
       },
@@ -114,13 +108,6 @@ export async function ownerRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     const venue = await myVenue(req, id);
     const body = parse(venueUpsertSchema.partial(), req.body);
-    const config = await getPlatformConfig();
-    if (
-      body.depositPercent !== undefined &&
-      (body.depositPercent < config.minDepositPercent || body.depositPercent > config.maxDepositPercent)
-    ) {
-      throw errors.depositRange();
-    }
 
     const critical: Record<string, unknown> = {};
     const direct: Record<string, unknown> = {};
@@ -306,7 +293,7 @@ export async function ownerRoutes(app: FastifyInstance) {
     const items: OwnerBookingView[] = bookings.map((b) => ({
       ...bookingView(b, null),
       creatorName: b.user.name,
-      creatorPhone: b.user.phone,
+      creatorEmail: b.user.email,
     }));
     return { items };
   });

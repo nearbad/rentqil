@@ -6,7 +6,7 @@ import { errors } from '../lib/errors';
 import { notifier } from '../lib/notifier';
 import { getPlatformConfig } from './config.service';
 import { policyBadge } from './venue.service';
-import { commissionFor, quoteBooking, splitEven } from '../domain/money';
+import { quoteBooking, splitEven } from '../domain/money';
 import {
   dbDate,
   openHoursForDay,
@@ -38,13 +38,14 @@ export function bookingView(booking: BookingFull, viewerId: string | null): Book
     startHour: booking.startHour,
     endHour: booking.endHour,
     totalTiyin: booking.totalTiyin,
-    depositTiyin: booking.depositTiyin,
     serviceFeeTiyin: booking.serviceFeeTiyin,
-    payNowTiyin: booking.depositTiyin + booking.serviceFeeTiyin,
+    payNowTiyin: booking.totalTiyin + booking.serviceFeeTiyin,
+    contactPhone: booking.contactPhone,
     isSplit: booking.isSplit,
     splitToken: booking.splitToken,
     participants: booking.participants.map((p) => ({
       id: p.id,
+      fullName: p.fullName,
       shareTiyin: p.shareTiyin,
       status: p.status,
       isCreator: p.isCreator,
@@ -85,17 +86,9 @@ export async function quoteRange(input: RangeInput) {
   }
 
   const config = await getPlatformConfig();
-  const rawPercent = court.venue.depositPercent ?? config.defaultDepositPercent;
-  const depositPercent = Math.min(
-    Math.max(rawPercent, config.minDepositPercent),
-    config.maxDepositPercent
-  );
-
   const quote = quoteBooking({
     slotPricesTiyin: prices,
-    depositPercent,
-    serviceFeeEnabled: config.serviceFeeEnabled,
-    serviceFeeTiyin: config.serviceFeeTiyin,
+    serviceFeePercent: config.serviceFeePercent,
   });
 
   return { court, config, quote };
@@ -114,21 +107,15 @@ export async function quoteResponse(input: RangeInput): Promise<BookingQuoteResp
     holdMinutes: config.bookingTtlMinutes,
     splitHoldMinutes: config.splitTtlMinutes,
     policyBadge: policyBadge(court.venue.policy),
+    requireNames: court.venue.requireNames,
   };
 }
 
 export async function createBooking(
   userId: string,
-  input: RangeInput & { split?: { participants: number } }
+  input: RangeInput & { contactPhone: string; split?: { names: string[] } }
 ): Promise<BookingView> {
-  const { court, config, quote } = await quoteRange(input);
-
-  const commissionTiyin = commissionFor(
-    quote.totalTiyin,
-    quote.depositTiyin,
-    court.venue.commissionPercent ?? config.commissionPercent,
-    config.commissionEnabled
-  );
+  const { config, quote } = await quoteRange(input);
 
   const ttlMinutes = input.split ? config.splitTtlMinutes : config.bookingTtlMinutes;
   const expiresAt = new Date(Date.now() + ttlMinutes * 60_000);
@@ -166,7 +153,7 @@ export async function createBooking(
     if (blocked) throw errors.slotTaken();
 
     const split = input.split;
-    const shares = split ? splitEven(quote.payNowTiyin, split.participants) : null;
+    const shares = split ? splitEven(quote.payNowTiyin, split.names.length) : null;
 
     return tx.booking.create({
       data: {
@@ -176,16 +163,15 @@ export async function createBooking(
         startHour: input.startHour,
         endHour: input.endHour,
         totalTiyin: quote.totalTiyin,
-        depositPercent: quote.depositPercent,
-        depositTiyin: quote.depositTiyin,
         serviceFeeTiyin: quote.serviceFeeTiyin,
-        commissionTiyin,
+        contactPhone: input.contactPhone,
         isSplit: split !== undefined,
         splitToken: split ? randomBytes(9).toString('base64url') : null,
         expiresAt,
         participants: shares
           ? {
               create: shares.map((share, i) => ({
+                fullName: split!.names[i] ?? '',
                 shareTiyin: share,
                 isCreator: i === 0,
                 userId: i === 0 ? userId : null,
@@ -196,6 +182,11 @@ export async function createBooking(
       include: bookingInclude,
     });
   });
+
+  // remember the phone on the profile too, first booking fills it
+  await prisma.user
+    .updateMany({ where: { id: userId, phone: null }, data: { phone: input.contactPhone } })
+    .catch(() => {});
 
   return bookingView(booking, userId);
 }

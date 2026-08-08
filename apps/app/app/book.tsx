@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Plus, X } from 'lucide-react-native';
 import type { BookingQuoteResponse, BookingView, PaymentProviderId } from '@rentqil/shared';
 import { splitEven, tokens } from '@rentqil/shared';
 import { api, ApiError } from '@/lib/api';
@@ -12,7 +13,7 @@ import { Screen } from '@/ui/Screen';
 import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Card, Divider, ErrorBox, KeyValue, Loading } from '@/ui/bits';
-import { Stepper } from '@/ui/Stepper';
+import { Input } from '@/ui/Input';
 import { Toggle } from '@/ui/Toggle';
 import { ProviderSelect } from '@/components/ProviderSelect';
 import { PolicyBadgeView } from '@/components/PolicyBadgeView';
@@ -26,10 +27,15 @@ export default function BookScreen() {
 
   const [quote, setQuote] = useState<BookingQuoteResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [phone, setPhone] = useState('+998');
   const [split, setSplit] = useState(false);
-  const [people, setPeople] = useState(4);
+  const [names, setNames] = useState<string[]>(['', '']);
   const [provider, setProvider] = useState<PaymentProviderId>('click');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (me?.phone) setPhone(me.phone);
+  }, [me?.phone]);
 
   useEffect(() => {
     if (!params.courtId || !params.date) return;
@@ -42,10 +48,13 @@ export default function BookScreen() {
       );
   }, [params.courtId, params.date, params.start, params.end, t]);
 
+  const cleanNames = useMemo(() => names.map((n) => n.trim()), [names]);
+  const namesValid = cleanNames.every((n) => n.length >= 2);
+
   const perPerson = useMemo(() => {
     if (!quote || !split) return null;
-    return splitEven(quote.payNowTiyin, people)[0] ?? null;
-  }, [quote, split, people]);
+    return splitEven(quote.payNowTiyin, names.length)[0] ?? null;
+  }, [quote, split, names.length]);
 
   useEffect(() => {
     if (!me) {
@@ -54,8 +63,11 @@ export default function BookScreen() {
     }
   }, [me, params, router]);
 
+  const phoneValid = /^\+998\d{9}$/.test(phone.replace(/[\s-]/g, ''));
+  const canSubmit = phoneValid && (!split || namesValid);
+
   const submit = async () => {
-    if (!quote) return;
+    if (!quote || !canSubmit) return;
     setBusy(true);
     setError(null);
     try {
@@ -66,7 +78,8 @@ export default function BookScreen() {
           date: params.date,
           startHour: Number(params.start),
           endHour: Number(params.end),
-          ...(split ? { split: { participants: people } } : {}),
+          contactPhone: phone.replace(/[\s-]/g, ''),
+          ...(split ? { split: { names: cleanNames } } : {}),
         },
       });
       const myShare = split ? booking.participants.find((p) => p.isCreator) : undefined;
@@ -111,28 +124,61 @@ export default function BookScreen() {
 
         <Card style={{ gap: tokens.spacing.sm }}>
           <KeyValue label={t('book.total')} value={money(quote.totalTiyin, locale)} />
-          <KeyValue
-            label={t('book.deposit', { percent: quote.depositPercent })}
-            value={money(quote.depositTiyin, locale)}
-          />
           {quote.serviceFeeTiyin > 0 ? (
             <KeyValue label={t('book.serviceFee')} value={money(quote.serviceFeeTiyin, locale)} />
           ) : null}
           <Divider />
           <KeyValue label={t('book.payNow')} value={money(quote.payNowTiyin, locale)} strong />
-          <KeyValue label={t('book.payAtVenue')} value={money(quote.payAtVenueTiyin, locale)} />
+          <AppText variant="tiny" color={tokens.colors.gray500}>
+            {t('book.feeNote')}
+          </AppText>
         </Card>
+
+        <Input
+          label={t('book.contactPhone')}
+          value={phone}
+          onChangeText={setPhone}
+          placeholder={t('auth.phoneHint')}
+          keyboardType="phone-pad"
+        />
 
         <Card style={{ gap: tokens.spacing.md }}>
           <Toggle label={t('book.split')} value={split} onChange={setSplit} />
           {split ? (
             <>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <AppText variant="small" color={tokens.colors.gray500}>
-                  {t('book.splitCount')}
-                </AppText>
-                <Stepper value={people} min={2} max={30} onChange={setPeople} />
-              </View>
+              <AppText variant="small" color={tokens.colors.gray500}>
+                {t('book.splitNames')}
+              </AppText>
+              {names.map((name, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm }}>
+                  <View style={{ flex: 1 }}>
+                    <Input
+                      value={name}
+                      onChangeText={(v) => setNames((prev) => prev.map((n, j) => (j === i ? v : n)))}
+                      placeholder={i === 0 ? t('book.splitNameYou') : t('book.splitNamePlaceholder', { n: i + 1 })}
+                    />
+                  </View>
+                  {names.length > 2 ? (
+                    <Pressable
+                      onPress={() => setNames((prev) => prev.filter((_, j) => j !== i))}
+                      hitSlop={tokens.hitSlop}
+                    >
+                      <X size={18} color={tokens.colors.gray500} strokeWidth={1.6} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              ))}
+              {names.length < 30 ? (
+                <Pressable
+                  onPress={() => setNames((prev) => [...prev, ''])}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}
+                >
+                  <Plus size={16} color={tokens.colors.text} strokeWidth={2} />
+                  <AppText variant="small" weight="semibold">
+                    {t('book.splitAddPlayer')}
+                  </AppText>
+                </Pressable>
+              ) : null}
               {perPerson !== null ? (
                 <KeyValue label={t('book.perPerson')} value={money(perPerson, locale)} strong />
               ) : null}
@@ -153,9 +199,14 @@ export default function BookScreen() {
         </View>
 
         <Button
-          title={split && perPerson !== null ? `${t('book.cta')} · ${money(perPerson, locale)}` : `${t('book.cta')} · ${money(quote.payNowTiyin, locale)}`}
+          title={
+            split && perPerson !== null
+              ? `${t('book.cta')} · ${money(perPerson, locale)}`
+              : `${t('book.cta')} · ${money(quote.payNowTiyin, locale)}`
+          }
           onPress={submit}
           loading={busy}
+          disabled={!canSubmit}
         />
       </View>
     </Screen>

@@ -21,9 +21,9 @@ const sizes: Record<Variant, number> = {
 };
 
 const defaultWeights: Record<Variant, TextStyle['fontWeight']> = {
-  h1: '700',
-  h2: '700',
-  h3: '600',
+  h1: '800',
+  h2: '800',
+  h3: '700',
   body: '400',
   small: '400',
   tiny: '400',

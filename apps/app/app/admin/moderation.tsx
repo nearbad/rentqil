@@ -65,7 +65,7 @@ function ModerationCard({ item, onDone }: { item: ModerationItemView; onDone: ()
         <Badge text={item.kind === 'new' ? t('admin.moderationNew') : t('admin.moderationEdit')} />
       </View>
       <AppText variant="small" color={tokens.colors.gray500}>
-        {item.ownerPhone} · {item.submittedAt.slice(0, 16).replace('T', ' ')}
+        {item.ownerEmail ?? '-'} · {item.submittedAt.slice(0, 16).replace('T', ' ')}
       </AppText>
 
       <FieldList data={item.requested} compare={item.current} />

@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
-import type { OwnerVenueView, PlatformConfigView } from '@rentqil/shared';
+import type { OwnerVenueView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
@@ -115,13 +115,11 @@ export default function OwnerVenueScreen() {
   const { ready } = useRequireRole('owner', 'admin');
 
   const [venue, setVenue] = useState<OwnerVenueView | null>(null);
-  const [config, setConfig] = useState<PlatformConfigView | null>(null);
   const [editing, setEditing] = useState(false);
 
   const load = useCallback(() => {
     if (!id) return;
     api<OwnerVenueView>(`/owner/venues/${id}`).then(setVenue).catch(() => {});
-    api<PlatformConfigView>('/config').then(setConfig).catch(() => {});
   }, [id]);
 
   useFocusEffect(
@@ -162,7 +160,6 @@ export default function OwnerVenueScreen() {
         {editing ? (
           <VenueForm
             initial={venue}
-            depositBounds={config ? { min: config.minDepositPercent, max: config.maxDepositPercent } : undefined}
             onSaved={(v) => {
               setVenue(v);
               setEditing(false);

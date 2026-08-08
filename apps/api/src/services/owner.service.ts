@@ -1,17 +1,14 @@
 import type { OwnerFinanceView, OwnerStatsView, OwnerVenueView } from '@rentqil/shared';
 import { prisma } from '../lib/db';
-import { getPlatformConfig } from './config.service';
 import { venueDetailView, type VenueFull } from './venue.service';
 import { addDays, ymd, ymdFromDb } from '../domain/slots';
 
 export async function ownerVenueView(venue: VenueFull): Promise<OwnerVenueView> {
-  const config = await getPlatformConfig();
   return {
     ...venueDetailView(venue),
     status: venue.status,
     moderationComment: venue.moderationComment,
     hasPendingChanges: venue.pendingChanges !== null,
-    depositPercent: venue.depositPercent ?? config.defaultDepositPercent,
     policy: {
       refundEnabled: venue.policy?.refundEnabled ?? true,
       freeCancelHours: venue.policy?.freeCancelHours ?? 12,
@@ -25,24 +22,23 @@ export async function ownerFinance(ownerId: string): Promise<OwnerFinanceView> {
   const [completed, upcoming, payouts] = await Promise.all([
     prisma.booking.findMany({
       where: { status: 'completed', court: { venue: { ownerId } } },
-      select: { depositTiyin: true, commissionTiyin: true },
+      select: { totalTiyin: true },
     }),
     prisma.booking.findMany({
       where: { status: 'confirmed', court: { venue: { ownerId } } },
-      select: { depositTiyin: true, commissionTiyin: true },
+      select: { totalTiyin: true },
     }),
     prisma.payout.findMany({ where: { ownerId }, orderBy: { createdAt: 'desc' } }),
   ]);
 
-  const gross = completed.reduce((s, b) => s + b.depositTiyin, 0);
-  const commission = completed.reduce((s, b) => s + b.commissionTiyin, 0);
-  const accrued = gross - commission;
+  // the whole price is collected online, the owner is paid all of it
+  const gross = completed.reduce((s, b) => s + b.totalTiyin, 0);
+  const accrued = gross;
   const paidOut = payouts.reduce((s, p) => s + p.amountTiyin, 0);
-  const upcomingHolds = upcoming.reduce((s, b) => s + b.depositTiyin - b.commissionTiyin, 0);
+  const upcomingHolds = upcoming.reduce((s, b) => s + b.totalTiyin, 0);
 
   return {
     completedGrossTiyin: gross,
-    commissionHeldTiyin: commission,
     accruedTiyin: accrued,
     paidOutTiyin: paidOut,
     payableTiyin: accrued - paidOut,
@@ -70,7 +66,7 @@ export async function ownerStats(ownerId: string): Promise<OwnerStatsView> {
       date: true,
       startHour: true,
       endHour: true,
-      depositTiyin: true,
+      totalTiyin: true,
       status: true,
       noShow: true,
     },
@@ -90,8 +86,8 @@ export async function ownerStats(ownerId: string): Promise<OwnerStatsView> {
     const entry = byDay.get(day) ?? { bookings: 0, revenueTiyin: 0 };
     entry.bookings += 1;
     if (b.status === 'completed') {
-      entry.revenueTiyin += b.depositTiyin;
-      revenue += b.depositTiyin;
+      entry.revenueTiyin += b.totalTiyin;
+      revenue += b.totalTiyin;
       completedCount += 1;
       if (b.noShow) noShowCount += 1;
     }

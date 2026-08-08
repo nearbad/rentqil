@@ -12,9 +12,12 @@ import { confirmedNotify, getBookingFull } from './booking.service';
 // every transition is guarded inside a transaction, webhooks are idempotent
 
 export async function initPayment(args: {
-  userId: string;
+  // null when a guest pays a split share from the public link
+  userId: string | null;
   bookingId: string;
   participantId?: string;
+  // pay every share that is still pending in one go
+  remaining?: boolean;
   provider: PaymentProviderKind;
 }): Promise<{ paymentId: string; payUrl: string }> {
   const booking = await prisma.booking.findUnique({
@@ -26,8 +29,9 @@ export async function initPayment(args: {
   if (booking.expiresAt && booking.expiresAt.getTime() <= Date.now()) throw errors.bookingState();
 
   let type: 'deposit' | 'split_share' = 'deposit';
-  let amountTiyin = booking.depositTiyin + booking.serviceFeeTiyin;
+  let amountTiyin = booking.totalTiyin + booking.serviceFeeTiyin;
   let participantId: string | null = null;
+  let coversParticipantIds: string[] = [];
 
   if (args.participantId) {
     const participant = booking.participants.find((p) => p.id === args.participantId);
@@ -36,6 +40,12 @@ export async function initPayment(args: {
     type = 'split_share';
     amountTiyin = participant.shareTiyin;
     participantId = participant.id;
+  } else if (args.remaining) {
+    const pending = booking.participants.filter((p) => p.status === 'pending');
+    if (pending.length === 0) throw errors.splitState();
+    type = 'split_share';
+    amountTiyin = pending.reduce((s, p) => s + p.shareTiyin, 0);
+    coversParticipantIds = pending.map((p) => p.id);
   } else if (booking.userId !== args.userId) {
     // full payment can only be started by the creator
     throw errors.forbidden();
@@ -47,6 +57,7 @@ export async function initPayment(args: {
     where: {
       bookingId: booking.id,
       participantId,
+      coversParticipantIds: { equals: coversParticipantIds },
       provider: args.provider,
       type,
       status: 'created',
@@ -58,6 +69,7 @@ export async function initPayment(args: {
       data: {
         bookingId: booking.id,
         participantId,
+        coversParticipantIds,
         provider: args.provider,
         type,
         amountTiyin,
@@ -133,19 +145,24 @@ export async function applyPaymentResult(
       return { ok: true, confirmedBookingId: booking.id };
     }
 
-    // split share
-    const participant = booking.participants.find((p) => p.id === payment.participantId);
-    if (!participant || participant.status !== 'pending' || expired) {
-      // share got paid by someone else first, or the split timed out
+    // split share: either one participant or the whole remaining set
+    const coveredIds = payment.participantId
+      ? [payment.participantId]
+      : payment.coversParticipantIds;
+    const covered = booking.participants.filter((p) => coveredIds.includes(p.id));
+    const allStillPending =
+      covered.length === coveredIds.length && covered.every((p) => p.status === 'pending');
+    if (covered.length === 0 || !allStillPending || expired) {
+      // somebody paid one of these shares first, or the split timed out
       return { ok: true, refundNeeded: paid };
     }
-    await tx.bookingParticipant.update({
-      where: { id: participant.id },
+    await tx.bookingParticipant.updateMany({
+      where: { id: { in: coveredIds } },
       data: { status: 'paid', paidAt: new Date(), userId: payment.payerUserId },
     });
 
     const allPaid = booking.participants.every((p) =>
-      p.id === participant.id ? true : p.status === 'paid'
+      coveredIds.includes(p.id) ? true : p.status === 'paid'
     );
     if (allPaid) {
       await tx.booking.update({
@@ -216,9 +233,12 @@ export async function refundPayment(paymentId: string, amountTiyin?: number): Pr
     });
     if (refundedSoFar + amount >= payment.amountTiyin) {
       await tx.payment.update({ where: { id: payment.id }, data: { status: 'refunded' } });
-      if (payment.participantId) {
-        await tx.bookingParticipant.update({
-          where: { id: payment.participantId },
+      const coveredIds = payment.participantId
+        ? [payment.participantId]
+        : payment.coversParticipantIds;
+      if (coveredIds.length > 0) {
+        await tx.bookingParticipant.updateMany({
+          where: { id: { in: coveredIds }, status: 'paid' },
           data: { status: 'refunded' },
         });
       }

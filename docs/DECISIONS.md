@@ -77,3 +77,19 @@ Venue maps and the owner's coordinate picker use the Yandex Maps JS API when EXP
 ## 18. Caddy terminates TLS in front of the compose stack
 
 One more container instead of certbot cron plus nginx configs. Caddy reads DOMAIN and ACME_EMAIL from env, renews Let's Encrypt certs on its own and proxies the web and api containers over the internal network, so only ports 80 and 443 are published on the host. Cloudflare stays in "DNS only" mode until the first cert is issued, after that the orange cloud proxy with "Full (strict)" works fine on top.
+
+## 19. Full upfront payment, one percent based fee
+
+Bookings are paid in full online, there is no deposit split between online and cash. The platform charges a service fee as a percent of the price (admin sets it, default 10) on top, and that fee never comes back to the player: refunds by policy return the price part only. Exceptions where everything including the fee returns: the booking never got confirmed (expired split, late webhook) or the venue cancelled, because the player got nothing. Venue commission is gone entirely, partners receive the full price of completed bookings.
+
+## 20. Email and google sign in, phone per booking
+
+Accounts are keyed by email: otp codes by mail (mock provider logs them, smtp is a stub) or google oauth (server side code flow, buttons hidden until keys exist). Phone numbers are no longer identities: the booking form requires a contact phone, it lands on the booking itself and fills the profile on first use. ADMIN_EMAIL becomes admin on first login.
+
+## 21. Split shares carry names and need no account
+
+The creator types the full name of every player, shares are generated per name. The split page works without any login: the link token is the authorization, anyone who has it can pay any open share or everything remaining in one payment. A multi share payment records which shares it covers and refunds itself automatically if one of them got paid concurrently.
+
+## 22. Brutalist black and white
+
+The owner asked for brutalism, which replaced the earlier soft minimalism: zero border radius, 2px black borders, hard 4px offset shadows on cards, buttons and dropdown panels, uppercase button labels, 800 weight headings. Still strictly black on white with the same muted green and red accents.

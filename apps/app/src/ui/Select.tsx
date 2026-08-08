@@ -44,8 +44,9 @@ export function Select<T extends string | number | null>({
           <Pressable
             onPress={open}
             style={({ hovered }: { hovered?: boolean }) => ({
-              borderWidth: 1,
-              borderColor: hovered ? tokens.colors.gray300 : tokens.colors.gray150,
+              borderWidth: tokens.border,
+              borderColor: tokens.colors.text,
+              backgroundColor: hovered ? tokens.colors.gray50 : tokens.colors.white,
               borderRadius: tokens.radius.sm,
               paddingVertical: compact ? 8 : 12,
               paddingHorizontal: tokens.spacing.md,
@@ -53,7 +54,6 @@ export function Select<T extends string | number | null>({
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: tokens.spacing.sm,
-              backgroundColor: tokens.colors.white,
             })}
           >
             <AppText

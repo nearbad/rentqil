@@ -12,7 +12,6 @@ import {
   adminPayoutSchema,
   adminRefundSchema,
   adminUserBlockSchema,
-  adminVenueCommissionSchema,
   applicationDecisionSchema,
   moderationDecisionSchema,
   sportTypeCreateSchema,
@@ -45,7 +44,7 @@ export async function adminRoutes(app: FastifyInstance) {
       prisma.booking.count({ where: { createdAt: { gte: dayStart } } }),
       prisma.booking.findMany({
         where: { createdAt: { gte: weekStart }, status: { in: ['confirmed', 'completed'] } },
-        select: { totalTiyin: true, serviceFeeTiyin: true, commissionTiyin: true },
+        select: { totalTiyin: true, serviceFeeTiyin: true },
       }),
       prisma.booking.groupBy({
         by: ['courtId'],
@@ -75,7 +74,6 @@ export async function adminRoutes(app: FastifyInstance) {
       bookingsWeek: weekBookings.length,
       gmvWeekTiyin: weekBookings.reduce((s, b) => s + b.totalTiyin, 0),
       serviceFeesWeekTiyin: weekBookings.reduce((s, b) => s + b.serviceFeeTiyin, 0),
-      commissionWeekTiyin: weekBookings.reduce((s, b) => s + b.commissionTiyin, 0),
       topVenues: [...byVenue.entries()]
         .map(([venueId, v]) => ({ venueId, ...v }))
         .sort((a, b) => b.bookings - a.bookings)
@@ -100,7 +98,7 @@ export async function adminRoutes(app: FastifyInstance) {
       return {
         venueId: v.id,
         venueName: v.name,
-        ownerPhone: v.owner.phone,
+        ownerEmail: v.owner.email,
         kind: isNew ? 'new' : 'edit',
         submittedAt: v.updatedAt.toISOString(),
         current: isNew ? null : current,
@@ -152,6 +150,7 @@ export async function adminRoutes(app: FastifyInstance) {
       ? {
           OR: [
             { phone: { contains: q } },
+            { email: { contains: q, mode: 'insensitive' } },
             { name: { contains: q, mode: 'insensitive' } },
           ],
         }
@@ -164,6 +163,7 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     const items: AdminUserView[] = users.map((u) => ({
       id: u.id,
+      email: u.email,
       phone: u.phone,
       name: u.name,
       role: u.role,
@@ -195,6 +195,7 @@ export async function adminRoutes(app: FastifyInstance) {
     return {
       items: apps.map((a) => ({
         userId: a.userId,
+        email: a.user.email,
         phone: a.user.phone,
         name: a.user.name,
         message: a.message,
@@ -255,7 +256,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const items: OwnerBookingView[] = bookings.map((b) => ({
       ...bookingView(b, null),
       creatorName: b.user.name,
-      creatorPhone: b.user.phone,
+      creatorEmail: b.user.email,
     }));
     return { items };
   });
@@ -273,7 +274,7 @@ export async function adminRoutes(app: FastifyInstance) {
       type: p.type,
       status: p.status,
       amountTiyin: p.amountTiyin,
-      payerPhone: p.payer?.phone ?? null,
+      payerEmail: p.payer?.email ?? null,
       createdAt: p.createdAt.toISOString(),
     }));
     return { items };
@@ -300,19 +301,12 @@ export async function adminRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch('/admin/venues/:id/commission', adminOnly, async (req) => {
-    const { id } = req.params as { id: string };
-    const { commissionPercent } = parse(adminVenueCommissionSchema, req.body);
-    await prisma.venue.update({ where: { id }, data: { commissionPercent } });
-    return { ok: true };
-  });
-
   // payouts
 
   app.get('/admin/payouts', adminOnly, async () => {
     const owners = await prisma.user.findMany({
       where: { role: 'owner' },
-      select: { id: true, name: true, phone: true },
+      select: { id: true, name: true, email: true },
     });
 
     const rows: AdminPayoutRowView[] = [];
@@ -320,16 +314,16 @@ export async function adminRoutes(app: FastifyInstance) {
       const [completed, paidOut] = await Promise.all([
         prisma.booking.aggregate({
           where: { status: 'completed', court: { venue: { ownerId: owner.id } } },
-          _sum: { depositTiyin: true, commissionTiyin: true },
+          _sum: { totalTiyin: true },
         }),
         prisma.payout.aggregate({ where: { ownerId: owner.id }, _sum: { amountTiyin: true } }),
       ]);
-      const accrued = (completed._sum.depositTiyin ?? 0) - (completed._sum.commissionTiyin ?? 0);
+      const accrued = completed._sum.totalTiyin ?? 0;
       const paid = paidOut._sum.amountTiyin ?? 0;
       rows.push({
         ownerId: owner.id,
         ownerName: owner.name,
-        ownerPhone: owner.phone,
+        ownerEmail: owner.email,
         accruedTiyin: accrued,
         paidOutTiyin: paid,
         payableTiyin: accrued - paid,

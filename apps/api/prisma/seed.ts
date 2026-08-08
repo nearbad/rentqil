@@ -6,7 +6,7 @@ import 'dotenv/config';
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' });
 const prisma = new PrismaClient({ adapter });
 
-const ADMIN_PHONE = process.env.ADMIN_PHONE ?? '+998900000000';
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL ?? 'admin@rentqil.com').toLowerCase();
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 const WEEKEND = [0, 6];
 
@@ -45,7 +45,9 @@ interface VenueSeed {
   lng: number;
   photos: string[];
   amenities: string[];
-  depositPercent: number | null;
+  requireNames: boolean;
+  requireDocuments: boolean;
+  terms: string;
   policy: { refundEnabled: boolean; freeCancelHours: number; lateRefundPercent: number };
   courts: CourtSeed[];
 }
@@ -67,7 +69,9 @@ const venues: VenueSeed[] = [
       'https://picsum.photos/seed/rentqil-arena-3/900/600',
     ],
     amenities: ['locker_room', 'shower', 'lighting', 'parking'],
-    depositPercent: 30,
+    requireNames: true,
+    requireDocuments: false,
+    terms: "Maydonga faqat sport poyabzalida kiriladi. O'yin vaqti tugagach maydonni 5 daqiqada bo'shatish kerak.",
     policy: { refundEnabled: true, freeCancelHours: 12, lateRefundPercent: 50 },
     courts: [
       {
@@ -109,7 +113,9 @@ const venues: VenueSeed[] = [
       'https://picsum.photos/seed/rentqil-tennis-2/900/600',
     ],
     amenities: ['locker_room', 'shower', 'lighting'],
-    depositPercent: 50,
+    requireNames: false,
+    requireDocuments: true,
+    terms: "Kortga birinchi kelganda pasport yoki ID karta ko'rsatish talab qilinadi.",
     policy: { refundEnabled: true, freeCancelHours: 24, lateRefundPercent: 0 },
     courts: [
       {
@@ -157,7 +163,9 @@ const venues: VenueSeed[] = [
     lng: 69.3321,
     photos: ['https://picsum.photos/seed/rentqil-hall-1/900/600'],
     amenities: ['locker_room', 'shower', 'parking'],
-    depositPercent: null,
+    requireNames: false,
+    requireDocuments: false,
+    terms: '',
     policy: { refundEnabled: false, freeCancelHours: 0, lateRefundPercent: 0 },
     courts: [
       {
@@ -196,7 +204,9 @@ const venues: VenueSeed[] = [
       'https://picsum.photos/seed/rentqil-registon-2/900/600',
     ],
     amenities: ['lighting', 'parking'],
-    depositPercent: 30,
+    requireNames: false,
+    requireDocuments: false,
+    terms: '',
     policy: { refundEnabled: true, freeCancelHours: 6, lateRefundPercent: 30 },
     courts: [
       {
@@ -224,7 +234,9 @@ const venues: VenueSeed[] = [
     lng: 71.7864,
     photos: ['https://picsum.photos/seed/rentqil-fergana-1/900/600'],
     amenities: ['locker_room', 'shower', 'lighting', 'parking'],
-    depositPercent: 40,
+    requireNames: true,
+    requireDocuments: false,
+    terms: 'Kort faqat tennis poyabzalida ishlatiladi, raketka ijarasi administratorda.',
     policy: { refundEnabled: true, freeCancelHours: 24, lateRefundPercent: 50 },
     courts: [
       {
@@ -260,28 +272,28 @@ async function main() {
   console.log(`sports: ${sports.length}`);
 
   const admin = await prisma.user.upsert({
-    where: { phone: ADMIN_PHONE },
+    where: { email: ADMIN_EMAIL },
     update: { role: 'admin' },
-    create: { phone: ADMIN_PHONE, name: 'Admin', role: 'admin', locale: 'ru' },
+    create: { email: ADMIN_EMAIL, name: 'Admin', role: 'admin', locale: 'ru' },
   });
-  console.log(`admin: ${admin.phone}`);
+  console.log(`admin: ${admin.email}`);
 
   const owner = await prisma.user.upsert({
-    where: { phone: '+998901112233' },
+    where: { email: 'owner@rentqil.com' },
     update: { role: 'owner' },
-    create: { phone: '+998901112233', name: 'Bahodir aka', role: 'owner', locale: 'uz' },
+    create: { email: 'owner@rentqil.com', phone: '+998901112233', name: 'Bahodir aka', role: 'owner', locale: 'uz' },
   });
   await prisma.ownerApplication.upsert({
     where: { userId: owner.id },
     update: { status: 'approved' },
     create: { userId: owner.id, status: 'approved', message: 'seed', decidedAt: new Date() },
   });
-  console.log(`owner: ${owner.phone}`);
+  console.log(`owner: ${owner.email}`);
 
   await prisma.user.upsert({
-    where: { phone: '+998907654321' },
+    where: { email: 'player@rentqil.com' },
     update: {},
-    create: { phone: '+998907654321', name: 'Timur', locale: 'ru' },
+    create: { email: 'player@rentqil.com', phone: '+998907654321', name: 'Timur', locale: 'ru' },
   });
 
   for (const seed of venues) {
@@ -303,7 +315,9 @@ async function main() {
         photos: seed.photos,
         amenities: seed.amenities,
         status: 'approved',
-        depositPercent: seed.depositPercent,
+        requireNames: seed.requireNames,
+        requireDocuments: seed.requireDocuments,
+        terms: seed.terms,
         policy: { create: seed.policy },
       },
     });

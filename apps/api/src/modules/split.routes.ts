@@ -1,7 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import type { SplitPublicView } from '@rentqil/shared';
+import { splitPayInitSchema } from '@rentqil/shared';
 import { prisma } from '../lib/db';
+import type { PaymentProviderKind } from '../lib/db';
+import { parse } from '../lib/validate';
 import { errors } from '../lib/errors';
+import { initPayment } from '../services/payment.service';
 import { ymdFromDb } from '../domain/slots';
 
 export async function splitRoutes(app: FastifyInstance) {
@@ -30,14 +34,33 @@ export async function splitRoutes(app: FastifyInstance) {
       sharesPaid: booking.participants.filter((p) => p.status === 'paid').length,
       participants: booking.participants.map((p) => ({
         id: p.id,
+        fullName: p.fullName,
         shareTiyin: p.shareTiyin,
         status: p.status,
         isCreator: p.isCreator,
         paidByMe: viewerId !== null && p.userId === viewerId,
       })),
       expiresAt: booking.expiresAt?.toISOString() ?? null,
-      payNowTiyin: booking.depositTiyin + booking.serviceFeeTiyin,
+      payNowTiyin: booking.totalTiyin + booking.serviceFeeTiyin,
     };
     return view;
+  });
+
+  // paying a share needs no account, the token is the authorization
+  app.post('/split/:token/pay', { preHandler: app.optionalUser }, async (req) => {
+    const { token } = req.params as { token: string };
+    const body = parse(splitPayInitSchema, req.body);
+    const booking = await prisma.booking.findUnique({
+      where: { splitToken: token },
+      select: { id: true, isSplit: true },
+    });
+    if (!booking || !booking.isSplit) throw errors.notFound('booking');
+    return initPayment({
+      userId: req.user?.id ?? null,
+      bookingId: booking.id,
+      participantId: body.participantId,
+      remaining: body.remaining,
+      provider: body.provider as PaymentProviderKind,
+    });
   });
 }

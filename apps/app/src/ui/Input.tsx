@@ -21,8 +21,8 @@ export function Input({ label, error, style, ...rest }: Props) {
         {...rest}
         style={[
           {
-            borderWidth: 1,
-            borderColor: error ? tokens.colors.danger : tokens.colors.gray150,
+            borderWidth: tokens.border,
+            borderColor: error ? tokens.colors.danger : tokens.colors.text,
             borderRadius: tokens.radius.sm,
             paddingVertical: 12,
             paddingHorizontal: tokens.spacing.md,
