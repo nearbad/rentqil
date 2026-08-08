@@ -91,6 +91,7 @@ model User {
   notifications    Notification[]
   ownerApplication OwnerApplication?
   payouts          Payout[]
+  paymentsMade     Payment[]
 }
 
 model OwnerApplication {
@@ -279,6 +280,9 @@ model Payment {
   amountTiyin    Int
   idempotencyKey String              @unique
   externalId     String?
+  // who initiated the payment, matters for split shares paid "for a friend"
+  payerUserId    String?
+  payer          User?               @relation(fields: [payerUserId], references: [id])
   // for refunds, points at the payment being refunded
   refundOfId     String?
   refundOf       Payment?            @relation("Refunds", fields: [refundOfId], references: [id])

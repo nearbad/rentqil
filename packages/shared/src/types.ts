@@ -73,6 +73,18 @@ export interface BookingQuoteView {
   payAtVenueTiyin: number;
 }
 
+export interface BookingQuoteResponse extends BookingQuoteView {
+  venueName: string;
+  courtName: string;
+  sport: Sport;
+  date: string;
+  startHour: number;
+  endHour: number;
+  holdMinutes: number;
+  splitHoldMinutes: number;
+  policyBadge: PolicyBadge;
+}
+
 export interface ParticipantView {
   id: string;
   shareTiyin: number;

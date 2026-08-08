@@ -31,15 +31,7 @@ export function quoteBooking(input: QuoteInput): Quote {
   };
 }
 
-// split an amount into n parts that sum exactly to the amount,
-// first parts pick up the remainder tiyin
-export function splitEven(amountTiyin: number, parts: number): number[] {
-  if (parts < 1) throw new Error('parts must be >= 1');
-  if (amountTiyin < 0) throw new Error('amount must be >= 0');
-  const base = Math.floor(amountTiyin / parts);
-  const remainder = amountTiyin - base * parts;
-  return Array.from({ length: parts }, (_, i) => base + (i < remainder ? 1 : 0));
-}
+export { splitEven } from '@rentqil/shared';
 
 // commission is taken from the money the platform actually holds,
 // so it is a percent of the full price capped by the deposit

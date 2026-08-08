@@ -51,6 +51,15 @@ export const availabilityQuerySchema = z.object({
   days: z.coerce.number().int().min(1).max(30).optional(),
 });
 
+export const quoteQuerySchema = z
+  .object({
+    courtId: z.string().min(1),
+    date: ymdSchema,
+    start: z.coerce.number().int().min(0).max(23),
+    end: z.coerce.number().int().min(1).max(24),
+  })
+  .refine((q) => q.end > q.start, { message: 'end must be after start' });
+
 export const createBookingSchema = z
   .object({
     courtId: z.string().min(1),

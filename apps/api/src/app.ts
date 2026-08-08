@@ -5,6 +5,8 @@ import { AppError } from './lib/errors';
 import { authRoutes } from './modules/auth.routes';
 import { meRoutes } from './modules/me.routes';
 import { catalogRoutes } from './modules/catalog.routes';
+import { bookingsRoutes } from './modules/bookings.routes';
+import { paymentsRoutes } from './modules/payments.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -34,6 +36,8 @@ export async function buildApp() {
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(catalogRoutes);
+  await app.register(bookingsRoutes);
+  await app.register(paymentsRoutes);
 
   return app;
 }
