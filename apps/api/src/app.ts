@@ -4,6 +4,7 @@ import authPlugin from './plugins/auth';
 import { AppError } from './lib/errors';
 import { authRoutes } from './modules/auth.routes';
 import { meRoutes } from './modules/me.routes';
+import { catalogRoutes } from './modules/catalog.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -32,6 +33,7 @@ export async function buildApp() {
 
   await app.register(authRoutes);
   await app.register(meRoutes);
+  await app.register(catalogRoutes);
 
   return app;
 }
