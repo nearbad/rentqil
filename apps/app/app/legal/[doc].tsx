@@ -22,7 +22,7 @@ export default function LegalScreen() {
   }
 
   return (
-    <Screen title={t(content.titleKey)} back>
+    <Screen title={t(content.titleKey)} back wide>
       <View style={{ gap: tokens.spacing.lg }}>
         {content.sections.map((section) => (
           <View key={section.heading} style={{ gap: tokens.spacing.xs }}>

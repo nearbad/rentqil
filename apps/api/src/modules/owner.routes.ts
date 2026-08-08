@@ -326,13 +326,26 @@ export async function ownerRoutes(app: FastifyInstance) {
 
   app.get('/owner/bookings', ownerOnly, async (req) => {
     const query = parse(
-      z.object({ date: ymdSchema.optional(), courtId: z.string().optional(), venueId: z.string().optional() }),
+      z.object({
+        date: ymdSchema.optional(),
+        // date range for the "all" list: from is inclusive, until is exclusive
+        from: ymdSchema.optional(),
+        until: ymdSchema.optional(),
+        courtId: z.string().optional(),
+        venueId: z.string().optional(),
+      }),
       req.query
     );
     const where: Prisma.BookingWhereInput = {
       court: { venue: { ownerId: req.user!.id } },
     };
     if (query.date) where.date = dbDate(query.date);
+    if (query.from || query.until) {
+      where.date = {
+        ...(query.from ? { gte: dbDate(query.from) } : {}),
+        ...(query.until ? { lt: dbDate(query.until) } : {}),
+      };
+    }
     if (query.courtId) where.courtId = query.courtId;
     if (query.venueId) where.court = { venueId: query.venueId, venue: { ownerId: req.user!.id } };
 
@@ -344,7 +357,8 @@ export async function ownerRoutes(app: FastifyInstance) {
         promoCode: { select: { code: true } },
         user: true,
       },
-      orderBy: [{ date: 'desc' }, { startHour: 'asc' }],
+      // upcoming ranges read top down, single day and past lists newest first
+      orderBy: query.from ? [{ date: 'asc' }, { startHour: 'asc' }] : [{ date: 'desc' }, { startHour: 'asc' }],
       take: 200,
     });
 

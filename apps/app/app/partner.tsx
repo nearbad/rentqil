@@ -26,7 +26,9 @@ export default function PartnerScreen() {
   const [sent, setSent] = useState(false);
 
   const contactValid = CONTACT_RE.test(contact.trim());
-  const canSubmit = name.trim().length >= 2 && contactValid;
+  // STIR of an uzbek legal entity is exactly 9 digits
+  const innValid = !inn.trim() || /^\d{9}$/.test(inn.trim());
+  const canSubmit = name.trim().length >= 2 && contactValid && innValid;
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -94,13 +96,20 @@ export default function PartnerScreen() {
             </AppText>
           ) : null}
         </View>
-        <Input
-          label={t('partner.inn')}
-          value={inn}
-          onChangeText={setInn}
-          keyboardType="number-pad"
-          maxLength={14}
-        />
+        <View style={{ gap: tokens.spacing.xs }}>
+          <Input
+            label={t('partner.inn')}
+            value={inn}
+            onChangeText={setInn}
+            keyboardType="number-pad"
+            maxLength={9}
+          />
+          {inn.trim() && !innValid ? (
+            <AppText variant="tiny" color={tokens.colors.danger}>
+              {t('partner.innInvalid')}
+            </AppText>
+          ) : null}
+        </View>
         <Input
           label={t('partner.message')}
           value={message}

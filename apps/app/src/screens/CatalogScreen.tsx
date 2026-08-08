@@ -97,7 +97,7 @@ export function CatalogScreen() {
   const desktop = width >= tokens.breakpointDesktop;
 
   return (
-    <Screen wide>
+    <Screen wide siteFooter>
       <View style={{ gap: tokens.spacing.lg, paddingTop: desktop ? tokens.spacing.xl : tokens.spacing.md }}>
         <View style={{ width: '100%', maxWidth: 460, alignSelf: desktop ? 'center' : 'stretch' }}>
           <Input value={search} onChangeText={setSearch} placeholder={t('catalog.searchPlaceholder')} />

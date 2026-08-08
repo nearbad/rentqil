@@ -19,10 +19,12 @@ interface Props {
   contentStyle?: ViewStyle;
   // wide pages (catalog, dashboards) get the full desktop column
   wide?: boolean;
+  // the site footer only shows on the landing pages that opt in
+  siteFooter?: boolean;
 }
 
 // every page renders inside this: site header, centered column, optional title row
-export function Screen({ title, back, right, children, scroll = true, padded = true, footer, contentStyle, wide }: Props) {
+export function Screen({ title, back, right, children, scroll = true, padded = true, footer, contentStyle, wide, siteFooter }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -78,7 +80,7 @@ export function Screen({ title, back, right, children, scroll = true, padded = t
       {scroll ? (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           {body}
-          <SiteFooter />
+          {siteFooter ? <SiteFooter /> : null}
         </ScrollView>
       ) : (
         <View style={{ flex: 1 }}>{body}</View>

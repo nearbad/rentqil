@@ -199,10 +199,11 @@ export const partnerApplySchema = z.object({
   name: z.string().trim().min(2).max(80),
   // email or telegram handle, one field for both
   contact: z.string().trim().min(3).max(120),
+  // uzbek legal entity STIR is exactly 9 digits, there is no public checksum
   inn: z
     .string()
     .trim()
-    .regex(/^\d{9,14}$/)
+    .regex(/^\d{9}$/)
     .optional()
     .or(z.literal('').transform(() => undefined)),
   message: z.string().trim().max(1000).optional(),

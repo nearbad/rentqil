@@ -82,27 +82,11 @@ export function SiteFooter() {
               </AppText>
             </AppText>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.md }}>
-              <Pressable
-                onPress={() => Linking.openURL(TELEGRAM_URL)}
-                hitSlop={6}
-                accessibilityLabel="Telegram"
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              >
-                <Send size={16} color={tokens.colors.gray700} strokeWidth={1.6} />
-                <AppText variant="small" color={tokens.colors.gray700}>
-                  @rentqil
-                </AppText>
+              <Pressable onPress={() => Linking.openURL(TELEGRAM_URL)} hitSlop={6} accessibilityLabel="Telegram">
+                <Send size={18} color={tokens.colors.gray700} strokeWidth={1.6} />
               </Pressable>
-              <Pressable
-                onPress={() => Linking.openURL(INSTAGRAM_URL)}
-                hitSlop={6}
-                accessibilityLabel="Instagram"
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              >
-                <InstagramGlyph size={16} color={tokens.colors.gray700} />
-                <AppText variant="small" color={tokens.colors.gray700}>
-                  @rentqil
-                </AppText>
+              <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)} hitSlop={6} accessibilityLabel="Instagram">
+                <InstagramGlyph size={18} color={tokens.colors.gray700} />
               </Pressable>
             </View>
             <Pressable

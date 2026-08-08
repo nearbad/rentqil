@@ -115,7 +115,7 @@ export default function ProfileScreen() {
 
   if (!me) {
     return (
-      <Screen title={t('profile.title')}>
+      <Screen title={t('profile.title')} siteFooter>
         <View style={{ gap: tokens.spacing.lg, paddingTop: tokens.spacing.xl }}>
           <AppText color={tokens.colors.gray500}>{t('auth.loginRequired')}</AppText>
           <Button title={t('auth.title')} onPress={() => router.push('/login')} />
@@ -134,7 +134,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <Screen title={t('profile.title')}>
+    <Screen title={t('profile.title')} siteFooter>
       <View style={{ gap: tokens.spacing.lg, paddingTop: tokens.spacing.md }}>
         <AppText variant="h3">{me.email ?? me.phone}</AppText>
 

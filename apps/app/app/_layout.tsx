@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { tokens } from '@rentqil/shared';
@@ -8,9 +8,45 @@ import { AuthProvider } from '@/lib/auth';
 import { I18nProvider } from '@/lib/i18n';
 import { WebStyles } from '@/components/WebStyles';
 
+const METRIKA_ID = 111424477;
+
+// yandex metrika, loaded on web only; ym() queues calls until the tag arrives
+function loadMetrika() {
+  const w = window as unknown as { ym?: { (...args: unknown[]): void; a?: unknown[]; l?: number } };
+  if (w.ym) return;
+  const ym: { (...args: unknown[]): void; a?: unknown[]; l?: number } = (...args) => {
+    (ym.a = ym.a || []).push(args);
+  };
+  ym.l = Date.now();
+  w.ym = ym;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://mc.yandex.ru/metrika/tag.js?id=${METRIKA_ID}`;
+  document.head.appendChild(script);
+  ym(METRIKA_ID, 'init', {
+    webvisor: true,
+    clickmap: true,
+    ecommerce: 'dataLayer',
+    referrer: document.referrer,
+    url: location.href,
+    accurateTrackBounce: true,
+    trackLinks: true,
+  });
+}
+
 export default function RootLayout() {
+  const pathname = usePathname();
+
+  // the app is a SPA, so route changes are reported to metrika by hand
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const w = window as unknown as { ym?: (...args: unknown[]) => void };
+    w.ym?.(METRIKA_ID, 'hit', location.href);
+  }, [pathname]);
+
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    loadMetrika();
     document.title = "rentqil! - sport maydonlarini bron qilish | аренда спортивных площадок в Узбекистане";
 
     const font = document.createElement('link');

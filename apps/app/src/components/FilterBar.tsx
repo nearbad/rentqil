@@ -183,18 +183,11 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
               onPress={() => onChange({ sort: 'default' })}
               accessibilityLabel={t('catalog.reset')}
               hitSlop={8}
-              style={({ pressed }) => ({
-                width: 30,
-                height: 30,
-                borderRadius: 15,
-                borderWidth: 1,
-                borderColor: tokens.colors.gray300,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: pressed ? tokens.colors.gray150 : tokens.colors.white,
-              })}
+              style={{ alignItems: 'center', justifyContent: 'center' }}
             >
-              <X size={16} color={tokens.colors.gray700} />
+              {({ pressed }: { pressed: boolean }) => (
+                <X size={18} color={pressed ? tokens.colors.text : tokens.colors.gray700} />
+              )}
             </Pressable>
           ) : null}
         </View>
