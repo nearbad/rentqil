@@ -1,0 +1,333 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  user
+  owner
+  admin
+}
+
+enum Locale {
+  uz
+  ru
+  en
+}
+
+enum Sport {
+  football
+  tennis
+  padel
+  basketball
+  volleyball
+  gym
+}
+
+enum VenueStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum BookingStatus {
+  pending_payment
+  confirmed
+  completed
+  cancelled_by_user
+  cancelled_by_owner
+  expired
+}
+
+enum ParticipantStatus {
+  pending
+  paid
+  refunded
+}
+
+enum PaymentType {
+  deposit
+  split_share
+  refund
+}
+
+enum PaymentStatus {
+  created
+  paid
+  failed
+  refunded
+}
+
+enum PaymentProviderKind {
+  click
+  payme
+  uzum
+  paynet
+  uzum_nasiya
+}
+
+model User {
+  id        String    @id @default(cuid())
+  phone     String    @unique
+  name      String?
+  role      Role      @default(user)
+  locale    Locale    @default(uz)
+  blockedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  venues           Venue[]
+  bookings         Booking[]
+  participants     BookingParticipant[]
+  notifications    Notification[]
+  ownerApplication OwnerApplication?
+  payouts          Payout[]
+}
+
+model OwnerApplication {
+  id           String            @id @default(cuid())
+  userId       String            @unique
+  user         User              @relation(fields: [userId], references: [id])
+  message      String?
+  status       ApplicationStatus @default(pending)
+  adminComment String?
+  createdAt    DateTime          @default(now())
+  decidedAt    DateTime?
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model Venue {
+  id                String      @id @default(cuid())
+  ownerId           String
+  owner             User        @relation(fields: [ownerId], references: [id])
+  name              String
+  description       String      @default("")
+  address           String
+  district          String
+  lat               Float
+  lng               Float
+  photos            String[]
+  amenities         String[]
+  status            VenueStatus @default(pending)
+  moderationComment String?
+  // critical field edits wait here for admin approval while the venue keeps
+  // serving the last approved data
+  pendingChanges    Json?
+  // null means platform default
+  depositPercent    Int?
+  // admin controlled per venue override, null means global setting
+  commissionPercent Int?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  courts Court[]
+  policy CancellationPolicy?
+}
+
+model CancellationPolicy {
+  id                String   @id @default(cuid())
+  venueId           String   @unique
+  venue             Venue    @relation(fields: [venueId], references: [id])
+  refundEnabled     Boolean  @default(true)
+  freeCancelHours   Int      @default(12)
+  lateRefundPercent Int      @default(0)
+  updatedAt         DateTime @updatedAt
+}
+
+model Court {
+  id       String  @id @default(cuid())
+  venueId  String
+  venue    Venue   @relation(fields: [venueId], references: [id])
+  name     String
+  sport    Sport
+  surface  String?
+  capacity Int?
+  indoor   Boolean @default(false)
+  active   Boolean @default(true)
+
+  scheduleRules ScheduleRule[]
+  priceRules    PriceRule[]
+  blockedSlots  BlockedSlot[]
+  bookings      Booking[]
+}
+
+// working hours, dayOfWeek follows Date.getDay(), 0 is Sunday
+model ScheduleRule {
+  id        String @id @default(cuid())
+  courtId   String
+  court     Court  @relation(fields: [courtId], references: [id])
+  dayOfWeek Int
+  openHour  Int
+  closeHour Int
+
+  @@index([courtId])
+}
+
+// price per hour, dayOfWeek null matches any day, a specific day wins
+model PriceRule {
+  id         String @id @default(cuid())
+  courtId    String
+  court      Court  @relation(fields: [courtId], references: [id])
+  dayOfWeek  Int?
+  startHour  Int
+  endHour    Int
+  priceTiyin Int
+
+  @@index([courtId])
+}
+
+// owner side manual block: phone bookings, repairs
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  courtId   String
+  court     Court    @relation(fields: [courtId], references: [id])
+  date      DateTime @db.Date
+  startHour Int
+  endHour   Int
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([courtId, date])
+}
+
+model Booking {
+  id      String @id @default(cuid())
+  courtId String
+  court   Court  @relation(fields: [courtId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  date      DateTime      @db.Date
+  startHour Int
+  endHour   Int
+  status    BookingStatus @default(pending_payment)
+
+  // money snapshot at creation time, integer tiyin
+  totalTiyin      Int
+  depositPercent  Int
+  depositTiyin    Int
+  serviceFeeTiyin Int
+  commissionTiyin Int
+
+  isSplit    Boolean   @default(false)
+  splitToken String?   @unique
+  // pending_payment bookings die at this moment unless paid
+  expiresAt  DateTime?
+
+  remindedAt  DateTime?
+  cancelledAt DateTime?
+  noShow      Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants BookingParticipant[]
+  payments     Payment[]
+
+  @@index([courtId, date])
+  @@index([userId])
+  @@index([status, expiresAt])
+}
+
+model BookingParticipant {
+  id         String            @id @default(cuid())
+  bookingId  String
+  booking    Booking           @relation(fields: [bookingId], references: [id])
+  // set when someone pays this share, shares are positional
+  userId     String?
+  user       User?             @relation(fields: [userId], references: [id])
+  shareTiyin Int
+  status     ParticipantStatus @default(pending)
+  isCreator  Boolean           @default(false)
+  paidAt     DateTime?
+
+  payments Payment[]
+
+  @@index([bookingId])
+}
+
+model Payment {
+  id            String              @id @default(cuid())
+  bookingId     String
+  booking       Booking             @relation(fields: [bookingId], references: [id])
+  participantId String?
+  participant   BookingParticipant? @relation(fields: [participantId], references: [id])
+
+  provider       PaymentProviderKind
+  type           PaymentType
+  status         PaymentStatus       @default(created)
+  amountTiyin    Int
+  idempotencyKey String              @unique
+  externalId     String?
+  // for refunds, points at the payment being refunded
+  refundOfId     String?
+  refundOf       Payment?            @relation("Refunds", fields: [refundOfId], references: [id])
+  refunds        Payment[]           @relation("Refunds")
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  @@index([bookingId])
+  @@index([status, type])
+}
+
+// single row, id is always 1
+model PlatformConfig {
+  id                    Int      @id @default(1)
+  serviceFeeEnabled     Boolean  @default(true)
+  serviceFeeTiyin       Int      @default(500000)
+  commissionEnabled     Boolean  @default(false)
+  commissionPercent     Int      @default(10)
+  defaultDepositPercent Int      @default(30)
+  minDepositPercent     Int      @default(10)
+  maxDepositPercent     Int      @default(100)
+  bookingTtlMinutes     Int      @default(15)
+  splitTtlMinutes       Int      @default(60)
+  calendarDays          Int      @default(7)
+  slotMinutes           Int      @default(60)
+  reminderHours         Int      @default(2)
+  updatedAt             DateTime @updatedAt
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  type      String
+  data      Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Payout {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  amountTiyin Int
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([ownerId])
+}

@@ -1,0 +1,15 @@
+{
+  "name": "rentqil",
+  "private": true,
+  "packageManager": "pnpm@10.4.1",
+  "scripts": {
+    "dev:api": "pnpm --filter @rentqil/api dev",
+    "dev:app": "pnpm --filter @rentqil/app dev",
+    "db:migrate": "pnpm --filter @rentqil/api db:migrate:dev",
+    "db:deploy": "pnpm --filter @rentqil/api db:migrate",
+    "db:seed": "pnpm --filter @rentqil/api db:seed",
+    "test": "pnpm --filter @rentqil/api test",
+    "typecheck": "pnpm -r typecheck",
+    "build:web": "pnpm --filter @rentqil/app build:web"
+  }
+}
