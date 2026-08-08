@@ -2,7 +2,7 @@
 
 Online booking for sports venues in Uzbekistan: football pitches, tennis and padel courts, basketball and volleyball halls, gyms. Players find a venue, pick free slots, pay the full price online and can split the bill with their team through a share link that needs no account. Partners (venue owners) manage schedules, prices, cancellation policies and booking conditions. The platform takes a percent service fee from the player, it is never refunded.
 
-Payments run against a mock provider for now (Click / Payme / Uzum / Paynet / Uzum Nasiya are selectable, real adapter skeletons are in `apps/api/src/payments`), but all the money logic is production grade: full upfront payments, exact split shares, policy driven refunds, idempotent webhooks. Sign in works by email code or Google, a phone number is only asked at booking time.
+Payments run against a mock provider for now (Click / Payme / Uzum / Paynet / Uzum Nasiya are selectable, real adapter skeletons are in `apps/api/src/payments`), but all the money logic is production grade: full upfront payments, exact split shares, policy driven refunds, idempotent webhooks. Sign in works by email code, a phone number is only asked at booking time.
 
 ## Stack
 
@@ -69,7 +69,7 @@ WEB_URL=https://rentqil.com              # public url of the web app
 EXPO_PUBLIC_API_URL=https://api.rentqil.com   # public url of the api, baked into the web bundle
 EXPO_PUBLIC_YANDEX_MAPS_KEY=             # optional, maps fall back to osm without it
 ADMIN_EMAIL=you@example.com              # this email logs in as the platform admin
-GOOGLE_CLIENT_ID=                        # optional, enables "continue with google"
+GOOGLE_CLIENT_ID=                        # not used yet, reserved for a future oauth option
 GOOGLE_CLIENT_SECRET=
 ```
 
@@ -87,7 +87,7 @@ docker compose exec api pnpm exec tsx prisma/seed.ts
 
 Only caddy publishes host ports (80/443), the api and web containers stay on the internal network. To serve everything from one domain instead, route `/` to the web container in the Caddyfile and set `EXPO_PUBLIC_API_URL` to the api path accordingly before building.
 
-Admin login in production: with `EMAIL_PROVIDER=mock` the login code is printed to the api logs, so after entering your email on the login screen run `docker compose logs api --tail 20` and grab the code there. Wire real SMTP (or google oauth keys) to stop reading logs.
+Admin login in production: with `EMAIL_PROVIDER=mock` the login code is printed to the api logs, so after entering your email on the login screen run `docker compose logs api --tail 20` and grab the code there. Wire real SMTP to stop reading logs.
 
 To change platform settings (service fee percent, timers, calendar depth) log in as the admin and open Admin -> Config. No redeploy needed.
 

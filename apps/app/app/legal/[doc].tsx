@@ -22,12 +22,12 @@ export default function LegalScreen() {
   }
 
   return (
-    <Screen title={t(content.titleKey)} back wide>
+    <Screen title={t(content.titleKey)} back>
       <View style={{ gap: tokens.spacing.lg }}>
         {content.sections.map((section) => (
           <View key={section.heading} style={{ gap: tokens.spacing.xs }}>
             <AppText variant="h3">{section.heading}</AppText>
-            <AppText color={tokens.colors.gray700} style={{ lineHeight: 22 }}>
+            <AppText color={tokens.colors.gray700} style={{ lineHeight: 22, textAlign: 'justify' }}>
               {section.body}
             </AppText>
           </View>
