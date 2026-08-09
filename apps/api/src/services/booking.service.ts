@@ -21,7 +21,6 @@ import {
 const bookingInclude = {
   court: { include: { venue: { include: { policy: true } } } },
   participants: { orderBy: { isCreator: 'desc' } },
-  promoCode: { select: { code: true } },
 } satisfies Prisma.BookingInclude;
 
 type BookingFull = Prisma.BookingGetPayload<{ include: typeof bookingInclude }>;
@@ -42,7 +41,7 @@ export function bookingView(booking: BookingFull, viewerId: string | null): Book
     totalTiyin: booking.totalTiyin,
     serviceFeeTiyin: booking.serviceFeeTiyin,
     discountTiyin: booking.discountTiyin,
-    promoCode: booking.promoCode?.code ?? null,
+    promoCode: booking.promoCodeText,
     payNowTiyin: booking.totalTiyin + booking.serviceFeeTiyin,
     contactPhone: booking.contactPhone,
     playersCount: booking.playersCount,
@@ -98,12 +97,14 @@ export async function quoteRange(input: RangeInput) {
   const base = prices.reduce((s, p) => s + p, 0);
 
   let promoId: string | null = null;
+  let promoText: string | null = null;
   let promoError: PromoError | null = null;
   let discountTiyin = 0;
   if (input.promoCode) {
     const res = await resolvePromo(input.promoCode, court.venue.id, court.venue.ownerId);
     if (res.promo) {
       promoId = res.promo.id;
+      promoText = res.promo.code;
       discountTiyin = promoDiscount(res.promo, base);
     } else {
       promoError = res.error;
@@ -116,7 +117,7 @@ export async function quoteRange(input: RangeInput) {
     discountTiyin,
   });
 
-  return { court, config, quote, promoId, promoError };
+  return { court, config, quote, promoId, promoText, promoError };
 }
 
 export async function quoteResponse(input: RangeInput): Promise<BookingQuoteResponse> {
@@ -147,7 +148,7 @@ export async function createBooking(
     split?: { names: string[] };
   }
 ): Promise<BookingView> {
-  const { court, config, quote, promoId, promoError } = await quoteRange(input);
+  const { court, config, quote, promoId, promoText, promoError } = await quoteRange(input);
   if (promoError) {
     if (promoError === 'PROMO_EXPIRED') throw errors.promoExpired();
     if (promoError === 'PROMO_EXHAUSTED') throw errors.promoExhausted();
@@ -217,6 +218,7 @@ export async function createBooking(
         serviceFeeTiyin: quote.serviceFeeTiyin,
         discountTiyin: quote.discountTiyin,
         promoCodeId: promoId,
+        promoCodeText: promoText,
         contactPhone: input.contactPhone,
         playersCount: input.playersCount,
         playerNames: split ? [] : input.playerNames,

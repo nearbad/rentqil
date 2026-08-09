@@ -89,22 +89,29 @@ export default function OwnerPromosScreen() {
     }
   };
 
+  const failed = (e: unknown) =>
+    setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
+
   const toggleActive = async (promo: PromoCodeView) => {
+    setError(null);
     try {
       await api(`/owner/promos/${promo.id}`, { method: 'PATCH', body: { active: !promo.active } });
-      load();
-    } catch {
-      // list reload will show the true state
+    } catch (e) {
+      failed(e);
     }
+    load();
   };
 
   const remove = async (promo: PromoCodeView) => {
+    setError(null);
+    // drop it from the list right away, the reload confirms it
+    setPromos((prev) => prev?.filter((p) => p.id !== promo.id) ?? prev);
     try {
       await api(`/owner/promos/${promo.id}`, { method: 'DELETE' });
-      load();
-    } catch {
-      // ignored, see above
+    } catch (e) {
+      failed(e);
     }
+    load();
   };
 
   const venueName = (id: string) => venues.find((v) => v.id === id)?.name ?? id;

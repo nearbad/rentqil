@@ -192,6 +192,8 @@ export const uz = {
   // notifications
   'notif.title': 'Bildirishnomalar',
   'notif.empty': 'Bildirishnomalar yoʻq',
+  'notif.markAll': "Hammasini o'qilgan deb belgilash",
+  'notif.unread': "O'qilmagan bildirishnomalar",
   'notif.booking_confirmed': '{venue}: bron tasdiqlandi',
   'notif.booking_reminder': "{venue}: o'yin {hours} soatdan keyin",
   'notif.booking_cancelled': '{venue}: bron bekor qilindi',

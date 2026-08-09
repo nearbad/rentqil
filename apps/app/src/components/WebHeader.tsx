@@ -5,10 +5,11 @@ import { Bell, LayoutDashboard, ShieldCheck, User } from 'lucide-react-native';
 import { tokens } from '@rentqil/shared';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
+import { useNotifications } from '@/lib/notifications';
 import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { LanguageMenu } from './LanguageMenu';
-import { animProps } from '@/ui/anim';
+import { animProps, breatheProps, pulseProps } from '@/ui/anim';
 
 function NavLink({ label, path, active, onPress }: { label: string; path: string; active: boolean; onPress: (p: string) => void }) {
   return (
@@ -33,6 +34,7 @@ function NavLink({ label, path, active, onPress }: { label: string; path: string
 export function WebHeader() {
   const { t } = useI18n();
   const { me } = useAuth();
+  const { unread } = useNotifications();
   const router = useRouter();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
@@ -64,9 +66,19 @@ export function WebHeader() {
             ...(hovered ? { transform: [{ rotate: '-2deg' }] } : {}),
           })}
         >
-          <AppText variant="h3" color={tokens.colors.white} style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}>
+          <AppText
+            variant="h3"
+            color={tokens.colors.white}
+            style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}
+            {...breatheProps}
+          >
             rentqil
-            <AppText variant="h3" color={tokens.colors.accent} style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}>
+            <AppText
+              variant="h3"
+              color={tokens.colors.accent}
+              style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}
+              {...pulseProps}
+            >
               !
             </AppText>
           </AppText>
@@ -93,8 +105,26 @@ export function WebHeader() {
 
         {me ? (
           <>
-            <Pressable onPress={() => go('/notifications')} hitSlop={tokens.hitSlop}>
+            <Pressable
+              onPress={() => go('/notifications')}
+              hitSlop={tokens.hitSlop}
+              accessibilityLabel={unread > 0 ? t('notif.unread') : t('nav.notifications')}
+            >
               <Bell size={19} color={tokens.colors.gray700} strokeWidth={1.6} />
+              {unread > 0 ? (
+                <View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: -1,
+                    right: -2,
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: tokens.colors.accent,
+                  }}
+                />
+              ) : null}
             </Pressable>
             {desktop ? (
               <Pressable

@@ -355,7 +355,6 @@ export async function adminRoutes(app: FastifyInstance) {
       include: {
         court: { include: { venue: { include: { policy: true } } } },
         participants: { orderBy: { isCreator: 'desc' } },
-        promoCode: { select: { code: true } },
         user: true,
       },
       orderBy: { createdAt: 'desc' },

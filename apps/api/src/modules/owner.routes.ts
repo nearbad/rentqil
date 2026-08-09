@@ -354,7 +354,6 @@ export async function ownerRoutes(app: FastifyInstance) {
       include: {
         court: { include: { venue: { include: { policy: true } } } },
         participants: { orderBy: { isCreator: 'desc' } },
-        promoCode: { select: { code: true } },
         user: true,
       },
       // upcoming ranges read top down, single day and past lists newest first
@@ -489,13 +488,8 @@ export async function ownerRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     const found = await prisma.promoCode.findUnique({ where: { id } });
     if (!found || found.ownerId !== req.user!.id) throw errors.notFound('promo');
-    const used = await prisma.booking.count({ where: { promoCodeId: id } });
-    if (used > 0) {
-      // bookings reference it, keep the row but stop accepting the code
-      await prisma.promoCode.update({ where: { id }, data: { active: false } });
-    } else {
-      await prisma.promoCode.delete({ where: { id } });
-    }
+    // bookings keep their own copy of the code text, so the row can really go
+    await prisma.promoCode.delete({ where: { id } });
     return { ok: true };
   });
 }

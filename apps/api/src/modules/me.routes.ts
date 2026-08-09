@@ -65,11 +65,33 @@ export async function meRoutes(app: FastifyInstance) {
     return { items, unread };
   });
 
+  // the header bell polls this one, it must stay cheap
+  app.get('/me/notifications/unread', { preHandler: app.requireUser }, async (req) => {
+    const unread = await prisma.notification.count({
+      where: { userId: req.user!.id, readAt: null },
+    });
+    return { unread };
+  });
+
   app.post('/me/notifications/read', { preHandler: app.requireUser }, async (req) => {
     await prisma.notification.updateMany({
       where: { userId: req.user!.id, readAt: null },
       data: { readAt: new Date() },
     });
+    return { ok: true };
+  });
+
+  app.post('/me/notifications/:id/read', { preHandler: app.requireUser }, async (req) => {
+    const { id } = req.params as { id: string };
+    const done = await prisma.notification.updateMany({
+      where: { id, userId: req.user!.id, readAt: null },
+      data: { readAt: new Date() },
+    });
+    // already read is not an error, only a foreign or missing row is
+    if (done.count === 0) {
+      const exists = await prisma.notification.count({ where: { id, userId: req.user!.id } });
+      if (exists === 0) throw errors.notFound('notification');
+    }
     return { ok: true };
   });
 }

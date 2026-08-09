@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Pressable, View, useWindowDimensions } from 'react-native';
 import { X } from 'lucide-react-native';
 import { REGIONS, tokens, type Region } from '@rentqil/shared';
 import { useI18n } from '@/lib/i18n';
@@ -7,6 +7,7 @@ import { useSports } from '@/lib/sports';
 import { addDaysYmd, todayYmd } from '@/lib/format';
 import { AppText } from '@/ui/AppText';
 import { Chip } from '@/ui/bits';
+import { HScroll } from '@/ui/HScroll';
 import { Select } from '@/ui/Select';
 import { PriceSlider } from '@/ui/RangeSlider';
 import { SportIcon } from './SportIcon';
@@ -93,9 +94,7 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
           {sportChips}
         </View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: tokens.spacing.sm }}>
-          {sportChips}
-        </ScrollView>
+        <HScroll contentStyle={{ gap: tokens.spacing.sm }}>{sportChips}</HScroll>
       )}
 
       <View

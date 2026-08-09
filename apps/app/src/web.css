@@ -8,3 +8,49 @@
     background-color 0.12s ease,
     border-color 0.12s ease;
 }
+
+/* the header wordmark breathes, the bang pulses harder on the same beat.
+   react native text is inline, transforms need a block box to apply */
+@keyframes rentqil-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes rentqil-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.24);
+  }
+}
+
+[data-breathe],
+[data-pulse] {
+  display: inline-block;
+  transform-origin: 50% 60%;
+  animation-duration: 2.6s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+[data-breathe] {
+  animation-name: rentqil-breathe;
+}
+
+[data-pulse] {
+  animation-name: rentqil-pulse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-breathe],
+  [data-pulse] {
+    animation: none;
+  }
+}

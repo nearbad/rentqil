@@ -10,7 +10,7 @@ export const colors = {
   gray300: '#C6C6C6',
   gray150: '#E8E8E8',
   gray50: '#F6F6F6',
-  // the one loud color: exclamation marks and nothing else
+  // the one loud color: exclamation marks and unread dots, nothing else
   accent: '#E5484D',
   // functional, muted on purpose
   success: '#2F7D4F',

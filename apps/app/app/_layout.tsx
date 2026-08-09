@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { tokens } from '@rentqil/shared';
 import { AuthProvider } from '@/lib/auth';
 import { I18nProvider } from '@/lib/i18n';
+import { NotificationsProvider } from '@/lib/notifications';
 import { WebStyles } from '@/components/WebStyles';
 
 const METRIKA_ID = 111424477;
@@ -89,14 +90,16 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <I18nProvider>
         <AuthProvider>
-          <WebStyles />
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: tokens.colors.bg },
-            }}
-          />
+          <NotificationsProvider>
+            <WebStyles />
+            <StatusBar style="dark" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: tokens.colors.bg },
+              }}
+            />
+          </NotificationsProvider>
         </AuthProvider>
       </I18nProvider>
     </SafeAreaProvider>

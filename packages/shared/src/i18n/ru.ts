@@ -178,6 +178,8 @@ export const ru: Record<keyof typeof uz, string> = {
 
   'notif.title': 'Уведомления',
   'notif.empty': 'Уведомлений нет',
+  'notif.markAll': 'Отметить все прочитанными',
+  'notif.unread': 'Непрочитанные уведомления',
   'notif.booking_confirmed': '{venue}: бронь подтверждена',
   'notif.booking_reminder': '{venue}: игра через {hours} ч',
   'notif.booking_cancelled': '{venue}: бронь отменена',

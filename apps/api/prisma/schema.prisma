@@ -301,6 +301,9 @@ model Booking {
   discountTiyin   Int        @default(0)
   promoCodeId     String?
   promoCode       PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  // the code text is copied here so the booking still shows it
+  // after the owner deletes the promo
+  promoCodeText   String?
   // phone of the person responsible for the booking
   contactPhone    String @default("")
   // party size, capped by the court capacity when the owner set one

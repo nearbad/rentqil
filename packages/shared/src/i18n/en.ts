@@ -178,6 +178,8 @@ export const en: Record<keyof typeof uz, string> = {
 
   'notif.title': 'Notifications',
   'notif.empty': 'No notifications',
+  'notif.markAll': 'Mark all as read',
+  'notif.unread': 'Unread notifications',
   'notif.booking_confirmed': '{venue}: booking confirmed',
   'notif.booking_reminder': '{venue}: game in {hours}h',
   'notif.booking_cancelled': '{venue}: booking cancelled',
