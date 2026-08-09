@@ -1,0 +1,36 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.rentqil.com",
+        "EXPO_PUBLIC_WEB_URL": "https://rentqil.com"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.rentqil.com",
+        "EXPO_PUBLIC_WEB_URL": "https://rentqil.com"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.rentqil.com",
+        "EXPO_PUBLIC_WEB_URL": "https://rentqil.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

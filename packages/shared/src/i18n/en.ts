@@ -106,6 +106,7 @@ export const en: Record<keyof typeof uz, string> = {
   'venue.courts': 'Courts',
   'venue.calendar': 'Calendar',
   'venue.address': 'Address',
+  'venue.openInMaps': 'Open in maps',
   'venue.prices': 'Prices',
   'venue.selectCourt': 'Select a court',
   'venue.noSlots': 'Closed on this day',

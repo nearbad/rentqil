@@ -107,9 +107,10 @@ export function SlotCalendar({ days, selectedDate, onSelectDate, selectedHours, 
                     <Pressable
                       disabled={disabled}
                       onPress={() => pick(d.date, hour)}
-                      style={({ hovered }: { hovered?: boolean }) => ({
+                      style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => ({
                         borderWidth: 1,
-                        borderColor: hovered && !disabled ? tokens.colors.text : palette.border,
+                        borderColor:
+                          (hovered || pressed) && !disabled ? tokens.colors.text : palette.border,
                         backgroundColor: palette.bg,
                         paddingVertical: 7,
                         alignItems: 'center',

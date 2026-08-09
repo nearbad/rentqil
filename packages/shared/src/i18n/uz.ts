@@ -115,6 +115,7 @@ export const uz = {
   'venue.courts': 'Maydonlar',
   'venue.calendar': 'Kalendar',
   'venue.address': 'Manzil',
+  'venue.openInMaps': 'Xaritada ochish',
   'venue.prices': 'Narxlar',
   'venue.selectCourt': 'Maydonni tanlang',
   'venue.noSlots': 'Bu kunda ish vaqti yoʻq',

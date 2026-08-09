@@ -43,10 +43,10 @@ export function Select<T extends string | number | null>({
         renderTrigger={(open) => (
           <Pressable
             onPress={open}
-            style={({ hovered }: { hovered?: boolean }) => ({
+            style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => ({
               borderWidth: tokens.border,
               borderColor: tokens.colors.text,
-              backgroundColor: hovered ? tokens.colors.gray50 : tokens.colors.white,
+              backgroundColor: hovered || pressed ? tokens.colors.gray50 : tokens.colors.white,
               borderRadius: tokens.radius.sm,
               paddingVertical: compact ? 8 : 12,
               paddingHorizontal: tokens.spacing.md,

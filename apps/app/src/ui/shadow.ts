@@ -1,8 +1,7 @@
-import { Platform } from 'react-native';
 import { tokens } from '@rentqil/shared';
 
-// hard offset shadows only exist on the web, native silently skips them
+// the hard offset shadow is the core of the brutalist look, so native gets it
+// too: react native supports boxShadow on the new architecture
 export function hardShadow(size: 'sm' | 'md' = 'md'): Record<string, string> {
-  if (Platform.OS !== 'web') return {};
   return { boxShadow: size === 'sm' ? tokens.shadowSm : tokens.shadow };
 }

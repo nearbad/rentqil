@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, View, useWindowDimensions } from 'react-native';
 import { X } from 'lucide-react-native';
 import { REGIONS, tokens, type Region } from '@rentqil/shared';
 import { useI18n } from '@/lib/i18n';
@@ -171,7 +171,11 @@ export function FilterBar({ filters, onChange, maxPriceSom }: Props) {
           options={[
             { value: 'default', label: t('catalog.sortDefault') },
             { value: 'price', label: t('catalog.sortPrice') },
-            { value: 'distance', label: t('catalog.sortDistance') },
+            // distance needs browser geolocation, a phone would just bounce
+            // the choice back to default
+            ...(Platform.OS === 'web'
+              ? [{ value: 'distance', label: t('catalog.sortDistance') }]
+              : []),
           ]}
           style={{ minWidth: 130 }}
         />

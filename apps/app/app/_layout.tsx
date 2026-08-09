@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { tokens } from '@rentqil/shared';
 import { AuthProvider } from '@/lib/auth';
+import { useAppFonts } from '@/lib/fonts';
 import { I18nProvider } from '@/lib/i18n';
 import { NotificationsProvider } from '@/lib/notifications';
 import { WebStyles } from '@/components/WebStyles';
@@ -37,6 +38,8 @@ function loadMetrika() {
 
 export default function RootLayout() {
   const pathname = usePathname();
+  // native waits for the bundled ttf files, the web resolves this instantly
+  const fontsReady = useAppFonts();
 
   // the app is a SPA, so route changes are reported to metrika by hand
   useEffect(() => {
@@ -93,12 +96,14 @@ export default function RootLayout() {
           <NotificationsProvider>
             <WebStyles />
             <StatusBar style="dark" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: tokens.colors.bg },
-              }}
-            />
+            {fontsReady ? (
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: tokens.colors.bg },
+                }}
+              />
+            ) : null}
           </NotificationsProvider>
         </AuthProvider>
       </I18nProvider>

@@ -106,6 +106,7 @@ export const ru: Record<keyof typeof uz, string> = {
   'venue.courts': 'Площадки',
   'venue.calendar': 'Календарь',
   'venue.address': 'Адрес',
+  'venue.openInMaps': 'Открыть на карте',
   'venue.prices': 'Цены',
   'venue.selectCourt': 'Выберите корт',
   'venue.noSlots': 'В этот день не работает',

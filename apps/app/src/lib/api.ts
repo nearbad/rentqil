@@ -54,10 +54,18 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return json as T;
 }
 
-// multipart image upload, web only for now (the owner cabinet)
-export async function apiUpload(file: Blob, name: string): Promise<{ url: string }> {
+// the browser hands us a Blob, react native hands us a file uri descriptor
+export type UploadFile = Blob | { uri: string; name: string; type: string };
+
+// multipart image upload, used by the owner cabinet
+export async function apiUpload(file: UploadFile, name: string): Promise<{ url: string }> {
   const form = new FormData();
-  form.append('file', file, name);
+  if (file instanceof Blob) {
+    form.append('file', file, name);
+  } else {
+    // react native's FormData reads the uri itself and ignores a third arg
+    form.append('file', file as unknown as Blob);
+  }
   let res: Response;
   try {
     res = await fetch(`${API_URL}/uploads`, {

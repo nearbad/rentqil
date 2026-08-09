@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Modal, Pressable, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, DoorOpen, FileText, IdCard, Lightbulb, MapPin, ShowerHead, SquareParking, Users, X } from 'lucide-react-native';
 import type { Amenity, DayAvailabilityView, VenueDetailView } from '@rentqil/shared';
 import { tokens } from '@rentqil/shared';
@@ -32,6 +33,7 @@ export default function VenueScreen() {
   const { me } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const desktop = width >= tokens.breakpointDesktop;
 
   const [venue, setVenue] = useState<VenueDetailView | null>(null);
@@ -351,12 +353,19 @@ export default function VenueScreen() {
         ) : undefined
       }
     >
-      <Modal visible={lightbox} transparent animationType="fade" onRequestClose={() => setLightbox(false)}>
+      <Modal
+        visible={lightbox}
+        transparent
+        statusBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setLightbox(false)}
+      >
         <View style={{ flex: 1, backgroundColor: 'rgba(10,10,10,0.94)', justifyContent: 'center' }}>
           <Pressable
             onPress={() => setLightbox(false)}
             hitSlop={tokens.hitSlop}
-            style={{ position: 'absolute', top: 20, right: 20, zIndex: 2, padding: 8 }}
+            // the overlay covers the status bar, the close button must not
+            style={{ position: 'absolute', top: 20 + insets.top, right: 20, zIndex: 2, padding: 8 }}
           >
             <X size={28} color={tokens.colors.white} strokeWidth={2} />
           </Pressable>

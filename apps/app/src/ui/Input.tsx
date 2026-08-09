@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, TextInput, View, type TextInputProps } from 'react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
+import { textFont } from './typography';
 
 interface Props extends TextInputProps {
   label?: string;
@@ -29,7 +30,8 @@ export function Input({ label, error, style, ...rest }: Props) {
             fontSize: tokens.fontSize.body,
             color: tokens.colors.text,
             backgroundColor: tokens.colors.white,
-            ...(Platform.OS === 'web' ? { fontFamily: tokens.fontFamily, outlineStyle: 'none' as never } : {}),
+            ...textFont(),
+            ...(Platform.OS === 'web' ? { outlineStyle: 'none' as never } : {}),
           },
           style,
         ]}

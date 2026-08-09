@@ -1,28 +1,44 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Linking, Platform, View } from 'react-native';
 import { MapPin } from 'lucide-react-native';
 import { tokens } from '@rentqil/shared';
+import { useI18n } from '@/lib/i18n';
 import { AppText } from '@/ui/AppText';
+import { Button } from '@/ui/Button';
 
-// native placeholder, the real map only ships in the web bundle for now
-// swap for react-native-maps or similar when mobile builds happen
-export function MiniMap({ address }: { lat: number; lng: number; address: string }) {
+// no embedded map on a phone, the system maps app does it better and needs
+// no api key. the web twin of this file draws a real tile map.
+export function MiniMap({ lat, lng, address }: { lat: number; lng: number; address: string }) {
+  const { t } = useI18n();
+
+  const open = () => {
+    const label = encodeURIComponent(address);
+    const url =
+      Platform.OS === 'ios'
+        ? `maps://?ll=${lat},${lng}&q=${label}`
+        : `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
+    Linking.openURL(url).catch(() => {
+      void Linking.openURL(`https://maps.google.com/?q=${lat},${lng}`);
+    });
+  };
+
   return (
     <View
       style={{
-        height: 100,
-        borderWidth: 1,
-        borderColor: tokens.colors.gray150,
-        borderRadius: tokens.radius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: tokens.spacing.xs,
+        borderWidth: tokens.border,
+        borderColor: tokens.colors.text,
+        padding: tokens.spacing.md,
+        gap: tokens.spacing.sm,
+        backgroundColor: tokens.colors.white,
       }}
     >
-      <MapPin size={20} color={tokens.colors.gray500} strokeWidth={1.6} />
-      <AppText variant="small" color={tokens.colors.gray500} center>
-        {address}
-      </AppText>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: tokens.spacing.sm }}>
+        <MapPin size={18} color={tokens.colors.text} strokeWidth={1.6} />
+        <AppText variant="small" style={{ flex: 1 }}>
+          {address}
+        </AppText>
+      </View>
+      <Button title={t('venue.openInMaps')} variant="secondary" small onPress={open} />
     </View>
   );
 }

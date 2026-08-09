@@ -1,11 +1,19 @@
 import React from 'react';
-import { Pressable, ScrollView, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+  useWindowDimensions,
+  type ViewStyle,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
-import { WebHeader } from '@/components/WebHeader';
+import { AppBar } from '@/components/AppBar';
 import { SiteFooter } from '@/components/SiteFooter';
 
 interface Props {
@@ -23,13 +31,20 @@ interface Props {
   siteFooter?: boolean;
 }
 
-// every page renders inside this: site header, centered column, optional title row
+const phone = Platform.OS !== 'web';
+
+// every page renders inside this: app bar, centered column, optional title row
 export function Screen({ title, back, right, children, scroll = true, padded = true, footer, contentStyle, wide, siteFooter }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const desktop = width >= tokens.breakpointDesktop;
   const maxWidth = wide ? tokens.maxContentWide : tokens.maxContentWidth;
+
+  // on a phone the bar already carries the back arrow and the title, a second
+  // title row underneath would be website chrome, not an app
+  const titleInBar = phone && Boolean(back);
+  const showTitleRow = !titleInBar && title !== undefined && (title !== '' || back);
 
   const body = (
     <View
@@ -49,10 +64,19 @@ export function Screen({ title, back, right, children, scroll = true, padded = t
     </View>
   );
 
+  const content = scroll ? (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      {body}
+      {siteFooter && !phone ? <SiteFooter /> : null}
+    </ScrollView>
+  ) : (
+    <View style={{ flex: 1 }}>{body}</View>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: tokens.colors.bg, paddingTop: insets.top }}>
-      <WebHeader />
-      {title !== undefined && (title !== '' || back) ? (
+      <AppBar title={title} back={back} right={titleInBar ? right : undefined} />
+      {showTitleRow ? (
         <View
           style={{
             width: '100%',
@@ -77,13 +101,13 @@ export function Screen({ title, back, right, children, scroll = true, padded = t
           {right}
         </View>
       ) : null}
-      {scroll ? (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          {body}
-          {siteFooter ? <SiteFooter /> : null}
-        </ScrollView>
+      {phone ? (
+        // forms live inside the scroll view, the keyboard has to push them up
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          {content}
+        </KeyboardAvoidingView>
       ) : (
-        <View style={{ flex: 1 }}>{body}</View>
+        content
       )}
       {footer ? (
         <View

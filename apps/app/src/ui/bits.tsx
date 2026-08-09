@@ -1,8 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, View, type ViewStyle } from 'react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
 import { hardShadow } from './shadow';
+
+// touch has no hover, so a press has to be the feedback instead
+export const touch = Platform.OS !== 'web';
 
 export function Card({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
   return (
@@ -40,7 +43,7 @@ export function Chip({
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ hovered }: { hovered?: boolean }) => ({
+      style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => ({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
@@ -49,6 +52,7 @@ export function Chip({
         backgroundColor: selected ? tokens.colors.text : tokens.colors.white,
         paddingVertical: small ? 4 : 7,
         paddingHorizontal: small ? tokens.spacing.sm : tokens.spacing.md,
+        ...(touch && pressed && onPress ? { opacity: 0.55 } : {}),
       })}
     >
       {icon}

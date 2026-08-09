@@ -11,11 +11,15 @@ import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { Card } from '@/ui/bits';
 
+// a share link has to survive leaving the app, so native falls back to the
+// public site instead of handing out a bare path
+const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://rentqil.com';
+
 export function splitLink(token: string): string {
   if (typeof window !== 'undefined' && window.location) {
     return `${window.location.origin}/s/${token}`;
   }
-  return `/s/${token}`;
+  return `${WEB_URL}/s/${token}`;
 }
 
 export function SplitSection({ booking, onChanged }: { booking: BookingView; onChanged?: () => void }) {

@@ -201,7 +201,10 @@ export default function LoginScreen() {
           </>
         )}
 
-        {googleEnabled ? (
+        {/* the google flow is a full page redirect, a phone has nowhere to
+            land back, so the button stays on the web until it gets a
+            native auth session */}
+        {googleEnabled && Platform.OS === 'web' ? (
           <>
             <Divider />
             <Button title={t('auth.google')} variant="secondary" onPress={googleLogin} />

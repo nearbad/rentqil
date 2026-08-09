@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { tokens } from '@rentqil/shared';
 import { AppText } from './AppText';
+import { touch } from './bits';
 import { hardShadow } from './shadow';
 
 interface Props {
@@ -44,7 +45,7 @@ export function Popover({ renderTrigger, children, menuWidth = 260, align = 'lef
       <View ref={anchorRef} collapsable={false}>
         {renderTrigger(open)}
       </View>
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
+      <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={close}>
         <Pressable style={{ flex: 1 }} onPress={close}>
           {pos ? (
             <Pressable
@@ -85,14 +86,16 @@ export function MenuItem({
   return (
     <Pressable
       onPress={onPress}
-      style={({ hovered }: { hovered?: boolean }) => ({
+      style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => ({
         flexDirection: 'row',
         alignItems: 'center',
         gap: tokens.spacing.sm,
-        paddingVertical: 11,
+        // 11px keeps the desktop menu tight, a finger needs the full 44
+        paddingVertical: touch ? 14 : 11,
         paddingHorizontal: tokens.spacing.md,
         borderRadius: tokens.radius.sm,
-        backgroundColor: selected ? tokens.colors.gray50 : hovered ? tokens.colors.gray50 : tokens.colors.white,
+        backgroundColor:
+          selected || hovered || (touch && pressed) ? tokens.colors.gray50 : tokens.colors.white,
       })}
     >
       {icon}

@@ -4,6 +4,7 @@ import { X } from 'lucide-react-native';
 import type { OwnerVenueView, Region } from '@rentqil/shared';
 import { AMENITIES, REGIONS, tokens, type Amenity } from '@rentqil/shared';
 import { api, apiUpload, ApiError } from '@/lib/api';
+import { pickPhotos } from '@/lib/photos';
 import { useI18n } from '@/lib/i18n';
 import { useSports } from '@/lib/sports';
 import { AppText } from '@/ui/AppText';
@@ -14,6 +15,9 @@ import { Select } from '@/ui/Select';
 import { Toggle } from '@/ui/Toggle';
 import { MapPicker } from '@/components/MapPicker';
 import { AddressInput } from '@/components/AddressInput';
+
+// android has no numbers-and-punctuation keyboard, it falls back to letters
+const COORD_KEYS = Platform.OS === 'android' ? 'numeric' : 'numbers-and-punctuation';
 
 interface Props {
   initial?: OwnerVenueView;
@@ -59,32 +63,24 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel, patchPath }: 
 
   const removePhoto = (url: string) => setPhotos(photoList.filter((p) => p !== url).join('\n'));
 
-  // browser file picker feeding the api upload endpoint
-  const pickAndUpload = () => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/jpeg,image/png,image/webp';
-    input.multiple = true;
-    input.onchange = async () => {
-      const files = Array.from(input.files ?? ([] as unknown as FileList)).slice(0, 10);
-      if (files.length === 0) return;
-      setUploading(true);
-      setError(null);
-      try {
-        const urls: string[] = [];
-        for (const file of files) {
-          const res = await apiUpload(file, file.name);
-          urls.push(res.url);
-        }
-        setPhotos((prev) => [...prev.split('\n').map((p) => p.trim()).filter(Boolean), ...urls].join('\n'));
-      } catch (e) {
-        setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
-      } finally {
-        setUploading(false);
+  // system file picker on the web, photo library on a phone
+  const pickAndUpload = async () => {
+    const picked = await pickPhotos();
+    if (picked.length === 0) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const urls: string[] = [];
+      for (const photo of picked) {
+        const res = await apiUpload(photo.file, photo.name);
+        urls.push(res.url);
       }
-    };
-    input.click();
+      setPhotos((prev) => [...prev.split('\n').map((p) => p.trim()).filter(Boolean), ...urls].join('\n'));
+    } catch (e) {
+      setError(t(e instanceof ApiError ? (`error.${e.code}` as never) : 'error.UNKNOWN'));
+    } finally {
+      setUploading(false);
+    }
   };
 
   const submit = async () => {
@@ -227,24 +223,22 @@ export function VenueForm({ initial, onSaved, onDraft, draftLabel, patchPath }: 
         />
         <View style={{ flexDirection: 'row', gap: tokens.spacing.md }}>
           <View style={{ flex: 1 }}>
-            <Input label={`${t('owner.coordinates')} lat`} value={lat} onChangeText={setLat} keyboardType="numbers-and-punctuation" />
+            <Input label={`${t('owner.coordinates')} lat`} value={lat} onChangeText={setLat} keyboardType={COORD_KEYS} />
           </View>
           <View style={{ flex: 1 }}>
-            <Input label="lng" value={lng} onChangeText={setLng} keyboardType="numbers-and-punctuation" />
+            <Input label="lng" value={lng} onChangeText={setLng} keyboardType={COORD_KEYS} />
           </View>
         </View>
       </View>
       <View style={{ gap: tokens.spacing.sm }}>
         <PhotoStrip photos={photoList} onRemove={removePhoto} />
-        {Platform.OS === 'web' ? (
-          <Button
-            title={t('owner.uploadPhotos')}
-            variant="secondary"
-            small
-            loading={uploading}
-            onPress={pickAndUpload}
-          />
-        ) : null}
+        <Button
+          title={t('owner.uploadPhotos')}
+          variant="secondary"
+          small
+          loading={uploading}
+          onPress={pickAndUpload}
+        />
         <Input
           label={t('owner.photos')}
           value={photos}

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Platform, Text, type TextProps, type TextStyle } from 'react-native';
+import { Text, type TextProps, type TextStyle } from 'react-native';
 import { tokens } from '@rentqil/shared';
+import { textFont } from './typography';
 
 type Variant = 'h1' | 'h2' | 'h3' | 'body' | 'small' | 'tiny';
 
@@ -36,9 +37,8 @@ export function AppText({ variant = 'body', color, weight, center, style, ...res
       style={[
         {
           fontSize: sizes[variant],
-          fontWeight: weight ? tokens.fontWeight[weight] : defaultWeights[variant],
           color: color ?? tokens.colors.text,
-          ...(Platform.OS === 'web' ? { fontFamily: tokens.fontFamily } : {}),
+          ...textFont(weight ? tokens.fontWeight[weight] : defaultWeights[variant]),
           ...(center ? { textAlign: 'center' as const } : {}),
         },
         style,

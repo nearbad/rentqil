@@ -9,7 +9,8 @@ import { useNotifications } from '@/lib/notifications';
 import { AppText } from '@/ui/AppText';
 import { Button } from '@/ui/Button';
 import { LanguageMenu } from './LanguageMenu';
-import { animProps, breatheProps, pulseProps } from '@/ui/anim';
+import { LogoMark } from './LogoMark';
+import { animProps } from '@/ui/anim';
 
 function NavLink({ label, path, active, onPress }: { label: string; path: string; active: boolean; onPress: (p: string) => void }) {
   return (
@@ -66,22 +67,7 @@ export function WebHeader() {
             ...(hovered ? { transform: [{ rotate: '-2deg' }] } : {}),
           })}
         >
-          <AppText
-            variant="h3"
-            color={tokens.colors.white}
-            style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}
-            {...breatheProps}
-          >
-            rentqil
-            <AppText
-              variant="h3"
-              color={tokens.colors.accent}
-              style={{ letterSpacing: 1, fontFamily: tokens.logoFontFamily }}
-              {...pulseProps}
-            >
-              !
-            </AppText>
-          </AppText>
+          <LogoMark />
         </Pressable>
 
         {desktop ? (
