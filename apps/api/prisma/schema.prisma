@@ -77,7 +77,7 @@ model User {
   phone     String?   @unique
   name      String?
   role      Role      @default(user)
-  locale    Locale    @default(uz)
+  locale    Locale    @default(en)
   blockedAt DateTime?
   createdAt DateTime  @default(now())
   // telegram chat linked through the alert bot, owners get booking alerts there

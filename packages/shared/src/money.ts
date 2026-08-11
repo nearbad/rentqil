@@ -1,4 +1,4 @@
-import type { Locale } from './constants';
+import { DEFAULT_LOCALE, type Locale } from './constants';
 
 // all money in the system is integer tiyin, 1 som = 100 tiyin
 
@@ -37,7 +37,7 @@ export function splitEven(amountTiyin: number, parts: number): number[] {
 }
 
 // "1 200 000 UZS", tiyin remainder is dropped for display (prices are whole soms)
-export function formatMoney(tiyin: number, locale: Locale = 'uz'): string {
+export function formatMoney(tiyin: number, locale: Locale = DEFAULT_LOCALE): string {
   const negative = tiyin < 0;
   const som = Math.floor(Math.abs(tiyin) / TIYIN_PER_SOM);
   const grouped = som.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');

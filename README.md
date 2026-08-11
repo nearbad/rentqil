@@ -8,7 +8,7 @@ Payments run against a mock provider for now (Click / Payme / Uzum / Paynet / Uz
 
 - `apps/app` - Expo (React Native + react-native-web), TypeScript, expo-router. Only the web target is built and deployed today, mobile builds will come from the same codebase later.
 - `apps/api` - Fastify + TypeScript, REST.
-- `packages/shared` - types, zod schemas, i18n dictionaries (uz latin default, ru, en), design tokens.
+- `packages/shared` - types, zod schemas, i18n dictionaries (en default, ru, uz latin), design tokens.
 - PostgreSQL + Prisma 7 (rust-free client over the pg driver adapter).
 
 Money is stored as integer tiyin everywhere. Design decisions with reasoning live in [docs/DECISIONS.md](docs/DECISIONS.md).

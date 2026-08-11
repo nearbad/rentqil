@@ -61,9 +61,10 @@ export const BOOKING_STATUSES = [
 ] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
-export const LOCALES = ['uz', 'ru', 'en'] as const;
+// order drives the language menu, english comes first because it is the default
+export const LOCALES = ['en', 'ru', 'uz'] as const;
 export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = 'uz';
+export const DEFAULT_LOCALE: Locale = 'en';
 
 // day indexes follow Date.getDay(), 0 is Sunday
 // UI iterates in this order to render Monday first

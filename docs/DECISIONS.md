@@ -117,3 +117,7 @@ One api instance means no redis: a sliding window map keyed by ip (fastify trust
 ## 28. Admin edits are final, moderation is for owners
 
 /admin/venues lists and edits any venue through the same VenueForm the owner uses, but the patch endpoint applies changes immediately, clears pendingChanges and can flip status directly. Courts, schedules and prices were already reachable for admins through the owner endpoints.
+
+## 29. English is the default language
+
+The site opens in English for everyone who has not picked a language yet, uz latin and ru stay one click away in the header menu. LOCALES is ordered en, ru, uz so the menu follows the same priority, and new User rows default to en as well. Visitors who already chose a language keep it, the pick lives in local storage and on the account.
